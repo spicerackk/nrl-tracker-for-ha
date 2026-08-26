@@ -1,0 +1,23 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "NRL Scores Setup",
+        "description": "Select your favorite NRL team to track their live scores.",
+        "data": {
+          "team": "Team"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "This team is already configured."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "score": {
+        "name": "Score"
+      }
+    }
+  }
+}
