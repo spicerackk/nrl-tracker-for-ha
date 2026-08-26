@@ -46,7 +46,7 @@ Now you can add the card to your dashboard!
 1. Edit your dashboard and click **Add Card**.
 2. Scroll down to the bottom and select **Custom: NRL Score Card** (or use the visual editor).
 3. Select your team sensor (e.g., `sensor.nrl_broncos`) from the dropdown.
-4. **Customize View:** Use the "Show Advanced Plays by Default" toggle in the visual editor to choose whether the advanced details (tries, penalties, conversions) are expanded automatically.
+4. **Customize View:** Use the toggles in the visual editor to choose whether the advanced details are expanded automatically, and select exactly which event types you want to see (Try Scorers, Sin Bins, Penalty Goals, and Conversions).
 5. Save and enjoy! You can always click on the card to manually expand/collapse the advanced plays.
 
 ## Development

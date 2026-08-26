@@ -117,6 +117,7 @@ class NRLScoreCard extends HTMLElement {
       .icon-try { background-color: #4CAF50; }
       .icon-goal { background-color: #2196F3; }
       .icon-penalty { background-color: #FF9800; }
+      .icon-sinbin { background-color: #F44336; }
       
       .play-desc {
         display: flex;
@@ -168,8 +169,15 @@ class NRLScoreCard extends HTMLElement {
     let awayLogo = !isHome ? attrs.team_logo : attrs.opponent_logo;
     let awayScore = !isHome ? attrs.team_score : attrs.opponent_score;
 
-    // Advanced plays mockup data (until integration provides it)
-    const playsHtml = `
+    const showTries = this.config.show_event_tries !== false;
+    const showSinBins = this.config.show_event_sin_bins !== false;
+    const showPenalties = this.config.show_event_penalty_goals !== false;
+    const showConversions = this.config.show_event_conversions !== false;
+
+    let playsHtml = '';
+    
+    if (showTries) {
+      playsHtml += `
       <div class="play-item">
         <div class="play-time">58'</div>
         <div class="play-icon icon-try">T</div>
@@ -177,7 +185,11 @@ class NRLScoreCard extends HTMLElement {
           <span class="play-player">Reece Walsh</span>
           <span class="play-team">Broncos</span>
         </div>
-      </div>
+      </div>`;
+    }
+    
+    if (showConversions) {
+      playsHtml += `
       <div class="play-item">
         <div class="play-time">59'</div>
         <div class="play-icon icon-goal">G</div>
@@ -185,7 +197,11 @@ class NRLScoreCard extends HTMLElement {
           <span class="play-player">Adam Reynolds (Conv)</span>
           <span class="play-team">Broncos</span>
         </div>
-      </div>
+      </div>`;
+    }
+    
+    if (showPenalties) {
+      playsHtml += `
       <div class="play-item">
         <div class="play-time">42'</div>
         <div class="play-icon icon-penalty">P</div>
@@ -193,7 +209,23 @@ class NRLScoreCard extends HTMLElement {
           <span class="play-player">Nathan Cleary (Pen)</span>
           <span class="play-team">Panthers</span>
         </div>
-      </div>
+      </div>`;
+    }
+    
+    if (showSinBins) {
+      playsHtml += `
+      <div class="play-item">
+        <div class="play-time">32'</div>
+        <div class="play-icon icon-sinbin">SB</div>
+        <div class="play-desc">
+          <span class="play-player">Jarome Luai (Sin Bin)</span>
+          <span class="play-team">Panthers</span>
+        </div>
+      </div>`;
+    }
+    
+    if (showTries) {
+      playsHtml += `
       <div class="play-item">
         <div class="play-time">28'</div>
         <div class="play-icon icon-try">T</div>
@@ -201,8 +233,8 @@ class NRLScoreCard extends HTMLElement {
           <span class="play-player">Brian To'o</span>
           <span class="play-team">Panthers</span>
         </div>
-      </div>
-    `;
+      </div>`;
+    }
 
     this.content.innerHTML = `
       <div class="nrl-score-wrapper">
@@ -261,12 +293,27 @@ class NRLScoreCardEditor extends HTMLElement {
           .includeDomains="sensor"
           allow-custom-entity
         ></ha-entity-picker>
-        <div style="display: flex; align-items: center; margin-top: 16px;">
-          <ha-switch
-            .checked=${this._config.show_advanced_plays === true}
-            .configValue="show_advanced_plays"
-          ></ha-switch>
-          <span style="margin-left: 8px;">Show Advanced Plays by Default</span>
+        <div style="display: flex; flex-direction: column; margin-top: 16px; gap: 8px;">
+          <div style="display: flex; align-items: center;">
+            <ha-switch .checked=${this._config.show_advanced_plays === true} .configValue="show_advanced_plays" id="sw_adv"></ha-switch>
+            <span style="margin-left: 8px;">Show Advanced Plays by Default</span>
+          </div>
+          <div style="display: flex; align-items: center;">
+            <ha-switch .checked=${this._config.show_event_tries !== false} .configValue="show_event_tries" id="sw_tries"></ha-switch>
+            <span style="margin-left: 8px;">Show Tries</span>
+          </div>
+          <div style="display: flex; align-items: center;">
+            <ha-switch .checked=${this._config.show_event_conversions !== false} .configValue="show_event_conversions" id="sw_conv"></ha-switch>
+            <span style="margin-left: 8px;">Show Conversions</span>
+          </div>
+          <div style="display: flex; align-items: center;">
+            <ha-switch .checked=${this._config.show_event_penalty_goals !== false} .configValue="show_event_penalty_goals" id="sw_pen"></ha-switch>
+            <span style="margin-left: 8px;">Show Penalty Goals</span>
+          </div>
+          <div style="display: flex; align-items: center;">
+            <ha-switch .checked=${this._config.show_event_sin_bins !== false} .configValue="show_event_sin_bins" id="sw_sin"></ha-switch>
+            <span style="margin-left: 8px;">Show Sin Bins</span>
+          </div>
         </div>
       </div>
     `;
@@ -277,12 +324,19 @@ class NRLScoreCardEditor extends HTMLElement {
       picker.configValue = 'entity';
       picker.addEventListener('value-changed', this.valueChanged.bind(this));
     }
-    const sw = this.querySelector('ha-switch');
-    if (sw) {
-      sw.checked = this._config.show_advanced_plays === true;
-      sw.configValue = 'show_advanced_plays';
-      sw.addEventListener('change', this.valueChanged.bind(this));
-    }
+    
+    ['show_advanced_plays', 'show_event_tries', 'show_event_conversions', 'show_event_penalty_goals', 'show_event_sin_bins'].forEach(key => {
+      const el = this.querySelector(`[configValue="${key}"]`);
+      if (el) {
+        if (key === 'show_advanced_plays') {
+          el.checked = this._config[key] === true;
+        } else {
+          el.checked = this._config[key] !== false;
+        }
+        el.configValue = key;
+        el.addEventListener('change', this.valueChanged.bind(this));
+      }
+    });
   }
 
   valueChanged(ev) {

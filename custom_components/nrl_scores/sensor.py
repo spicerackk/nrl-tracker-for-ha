@@ -84,16 +84,16 @@ class NRLScoreSensor(CoordinatorEntity[NRLDataUpdateCoordinator], SensorEntity):
         
         attrs = {
             "league": "NRL",
-            "league_logo": "https://www.nrl.com/theme/nrl/badges/primary.svg",
+            "league_logo": "https://www.nrl.com/.theme/nrl/badge.svg",
             "team_abbr": team_name[:3].upper() if team_name else "UNK",
             "team_name": team_name,
-            "team_logo": f"https://www.nrl.com/theme/{team_theme}/badges/badge.svg",
+            "team_logo": f"https://www.nrl.com/.theme/{team_theme}/badge.svg",
             "team_score": team_score,
             "team_homeaway": "home" if is_home else "away",
             
             "opponent_abbr": opp_name[:3].upper() if opp_name else "UNK",
             "opponent_name": opp_name,
-            "opponent_logo": f"https://www.nrl.com/theme/{opp_theme}/badges/badge.svg",
+            "opponent_logo": f"https://www.nrl.com/.theme/{opp_theme}/badge.svg",
             "opponent_score": opp_score,
             
             "date": date_str,
