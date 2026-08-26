@@ -85,6 +85,8 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
             "match_state": match.get("matchState", "Unknown"),
             "home_team": home_team_data.get("nickName", "Unknown"),
             "away_team": away_team_data.get("nickName", "Unknown"),
+            "home_theme": home_team_data.get("theme", {}).get("key", "nrl"),
+            "away_theme": away_team_data.get("theme", {}).get("key", "nrl"),
             "home_score": home_team_data.get("score", 0),
             "away_score": away_team_data.get("score", 0),
             "venue": match.get("venue"),

@@ -20,35 +20,35 @@ A Home Assistant custom integration and companion Lovelace card for tracking NRL
 
 ## Configuration
 
-Once installed and restarted:
+Once installed and you have restarted Home Assistant:
 1. Go to **Settings** > **Devices & Services**.
 2. Click **Add Integration** and search for **NRL Scores**.
 3. Select the team you wish to track from the dropdown.
 
-*Note: You can add the integration multiple times to track multiple teams.*
+*Note: The integration MUST be added here for the custom Lovelace card to work, because setting it up activates the background server that hosts the card's JavaScript file!*
 
 ## Setting up the Frontend Card
 
-When the integration loads, it automatically serves the custom card files. You just need to tell Lovelace where to find them:
+When the integration is set up, it serves the custom card files. Tell Lovelace where to find them:
 
 1. Go to **Settings** > **Dashboards** > **Three dots (top right)** > **Resources**.
    *(If you don't see Resources, ensure Advanced Mode is enabled in your user profile).*
 2. Click **Add Resource**.
-3. Enter the URL: `/nrl_scores_frontend/nrl-score-card.js`
+3. Enter the URL: `/nrl_scores_frontend/nrl-score-card.js?v=1.1` *(Adding the `?v=1.1` forces your browser to bypass cache and download it)*.
 4. Select **JavaScript Module** as the Resource type.
 5. Click **Create**.
-6. **Refresh your browser window**.
+6. **Refresh your browser window (Ctrl+F5)**.
 
-## Usage
+## Usage & Customization
 
 Now you can add the card to your dashboard!
 
 1. Edit your dashboard and click **Add Card**.
 2. Scroll down to the bottom and select **Custom: NRL Score Card** (or use the visual editor).
-3. Select your `sensor.nrl_broncos` (or whatever your team sensor is named) from the dropdown.
-4. Save and enjoy! Click on the card to expand the advanced plays.
+3. Select your team sensor (e.g., `sensor.nrl_broncos`) from the dropdown.
+4. **Customize View:** Use the "Show Advanced Plays by Default" toggle in the visual editor to choose whether the advanced details (tries, penalties, conversions) are expanded automatically.
+5. Save and enjoy! You can always click on the card to manually expand/collapse the advanced plays.
 
 ## Development
 
 The frontend card is located in `custom_components/nrl_scores/frontend/nrl-score-card.js`. It uses standard Web Components and requires no build step to get started, making it easy to tweak!
-

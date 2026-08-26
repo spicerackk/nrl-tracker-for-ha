@@ -2,7 +2,6 @@ class NRLScoreCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    this.showDetails = false;
   }
 
   set hass(hass) {
@@ -18,6 +17,9 @@ class NRLScoreCard extends HTMLElement {
       throw new Error('Please define an entity');
     }
     this.config = config;
+    if (this.showDetails === undefined) {
+      this.showDetails = this.config.show_advanced_plays || false;
+    }
   }
 
   createCard() {
@@ -257,9 +259,15 @@ class NRLScoreCardEditor extends HTMLElement {
           .value=${this._config.entity}
           .configValue="entity"
           .includeDomains="sensor"
-          @value-changed=${this.valueChanged}
           allow-custom-entity
         ></ha-entity-picker>
+        <div style="display: flex; align-items: center; margin-top: 16px;">
+          <ha-switch
+            .checked=${this._config.show_advanced_plays === true}
+            .configValue="show_advanced_plays"
+          ></ha-switch>
+          <span style="margin-left: 8px;">Show Advanced Plays by Default</span>
+        </div>
       </div>
     `;
     const picker = this.querySelector('ha-entity-picker');
@@ -268,6 +276,12 @@ class NRLScoreCardEditor extends HTMLElement {
       picker.value = this._config.entity;
       picker.configValue = 'entity';
       picker.addEventListener('value-changed', this.valueChanged.bind(this));
+    }
+    const sw = this.querySelector('ha-switch');
+    if (sw) {
+      sw.checked = this._config.show_advanced_plays === true;
+      sw.configValue = 'show_advanced_plays';
+      sw.addEventListener('change', this.valueChanged.bind(this));
     }
   }
 

@@ -67,13 +67,17 @@ class NRLScoreSensor(CoordinatorEntity[NRLDataUpdateCoordinator], SensorEntity):
         if is_home:
             team_name = home_team
             team_score = data.get("home_score")
+            team_theme = data.get("home_theme", "nrl")
             opp_name = away_team
             opp_score = data.get("away_score")
+            opp_theme = data.get("away_theme", "nrl")
         else:
             team_name = away_team
             team_score = data.get("away_score")
+            team_theme = data.get("away_theme", "nrl")
             opp_name = home_team
             opp_score = data.get("home_score")
+            opp_theme = data.get("home_theme", "nrl")
             
         # Parse kickoff for kickoff_in logic (Optional but good for frontend)
         date_str = data.get("kick_off_time")
@@ -83,13 +87,13 @@ class NRLScoreSensor(CoordinatorEntity[NRLDataUpdateCoordinator], SensorEntity):
             "league_logo": "https://www.nrl.com/theme/nrl/badges/primary.svg",
             "team_abbr": team_name[:3].upper() if team_name else "UNK",
             "team_name": team_name,
-            "team_logo": f"https://www.nrl.com/theme/{team_name.lower().replace(' ', '-')}/badges/badge.svg",
+            "team_logo": f"https://www.nrl.com/theme/{team_theme}/badges/badge.svg",
             "team_score": team_score,
             "team_homeaway": "home" if is_home else "away",
             
             "opponent_abbr": opp_name[:3].upper() if opp_name else "UNK",
             "opponent_name": opp_name,
-            "opponent_logo": f"https://www.nrl.com/theme/{opp_name.lower().replace(' ', '-') if opp_name else 'unk'}/badges/badge.svg",
+            "opponent_logo": f"https://www.nrl.com/theme/{opp_theme}/badges/badge.svg",
             "opponent_score": opp_score,
             
             "date": date_str,
