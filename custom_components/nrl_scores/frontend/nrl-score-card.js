@@ -17,9 +17,7 @@ class NRLScoreCard extends HTMLElement {
       throw new Error('Please define an entity');
     }
     this.config = config;
-    if (this.showDetails === undefined) {
-      this.showDetails = this.config.show_advanced_plays || false;
-    }
+    this.showDetails = this.config.show_advanced_plays === true;
   }
 
   createCard() {
@@ -321,6 +319,8 @@ class NRLScoreCardEditor extends HTMLElement {
 
   render() {
     if (!this._config || !this._hass) return;
+    const showAdv = this._config.show_advanced_plays === true;
+    
     this.innerHTML = `
       <div class="card-config">
         <ha-entity-picker
@@ -336,25 +336,28 @@ class NRLScoreCardEditor extends HTMLElement {
             <span style="margin-left: 8px;">Show Entire Round (Game by Game)</span>
           </div>
           <div style="display: flex; align-items: center; border-top: 1px solid var(--divider-color); margin-top: 4px; padding-top: 8px;">
-            <ha-switch .checked=${this._config.show_advanced_plays === true} .configValue="show_advanced_plays" id="sw_adv"></ha-switch>
-            <span style="margin-left: 8px;">Show Advanced Plays by Default</span>
+            <ha-switch .checked=${showAdv} .configValue="show_advanced_plays" id="sw_adv"></ha-switch>
+            <span style="margin-left: 8px;">Display Advanced Plays</span>
           </div>
-          <div style="display: flex; align-items: center;">
+          
+          ${showAdv ? `
+          <div style="display: flex; align-items: center; margin-left: 24px;">
             <ha-switch .checked=${this._config.show_event_tries !== false} .configValue="show_event_tries" id="sw_tries"></ha-switch>
             <span style="margin-left: 8px;">Show Tries</span>
           </div>
-          <div style="display: flex; align-items: center;">
+          <div style="display: flex; align-items: center; margin-left: 24px;">
             <ha-switch .checked=${this._config.show_event_conversions !== false} .configValue="show_event_conversions" id="sw_conv"></ha-switch>
             <span style="margin-left: 8px;">Show Conversions</span>
           </div>
-          <div style="display: flex; align-items: center;">
+          <div style="display: flex; align-items: center; margin-left: 24px;">
             <ha-switch .checked=${this._config.show_event_penalty_goals !== false} .configValue="show_event_penalty_goals" id="sw_pen"></ha-switch>
             <span style="margin-left: 8px;">Show Penalty Goals</span>
           </div>
-          <div style="display: flex; align-items: center;">
+          <div style="display: flex; align-items: center; margin-left: 24px;">
             <ha-switch .checked=${this._config.show_event_sin_bins !== false} .configValue="show_event_sin_bins" id="sw_sin"></ha-switch>
             <span style="margin-left: 8px;">Show Sin Bins</span>
           </div>
+          ` : ''}
         </div>
       </div>
     `;
@@ -383,19 +386,23 @@ class NRLScoreCardEditor extends HTMLElement {
   valueChanged(ev) {
     if (!this._config || !this._hass) return;
     const target = ev.target;
-    if (this._config[target.configValue] === target.value) return;
-    if (target.configValue) {
-      if (target.value === '') {
-        const tmpConfig = { ...this._config };
-        delete tmpConfig[target.configValue];
-        this._config = tmpConfig;
-      } else {
-        this._config = {
-          ...this._config,
-          [target.configValue]: target.checked !== undefined ? target.checked : target.value,
-        };
-      }
+    if (!target.configValue) return;
+    
+    let newValue = target.checked !== undefined ? target.checked : target.value;
+    
+    if (this._config[target.configValue] === newValue) return;
+    
+    if (newValue === '' && target.checked === undefined) {
+      const tmpConfig = { ...this._config };
+      delete tmpConfig[target.configValue];
+      this._config = tmpConfig;
+    } else {
+      this._config = {
+        ...this._config,
+        [target.configValue]: newValue,
+      };
     }
+    
     const event = new CustomEvent('config-changed', {
       detail: { config: this._config },
       bubbles: true,
