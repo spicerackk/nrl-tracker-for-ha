@@ -236,31 +236,68 @@ class NRLScoreCard extends HTMLElement {
       </div>`;
     }
 
-    this.content.innerHTML = `
-      <div class="nrl-score-wrapper">
-        <div class="header-row">
-          <span class="${statusClass}">${statusText}</span>
-          <span>${attrs.league || 'NRL'}</span>
-        </div>
-        
-        <div class="teams-container">
+    const showEntireRound = this.config.show_entire_round === true;
+
+    let matchHtml = '';
+    
+    if (showEntireRound && attrs.round_fixtures && attrs.round_fixtures.length > 0) {
+      matchHtml = attrs.round_fixtures.map(f => {
+        let fStatus = 'Upcoming';
+        let fClass = '';
+        if (f.match_mode === 'Live') {
+          fStatus = f.game_time || 'Live';
+          fClass = 'status-in';
+        } else if (f.match_mode === 'Post') {
+          fStatus = 'Final';
+        }
+        return `
+          <div class="header-row" style="margin-top: 12px; border-top: 1px solid var(--divider-color); padding-top: 12px;">
+            <span class="${fClass}">${fStatus}</span>
+          </div>
+          <div class="team-row">
+            <img src="https://www.nrl.com/.theme/${f.home_theme}/badge.svg" class="team-logo" onerror="this.style.display='none'"/>
+            <span class="team-name">${f.home_team}</span>
+            <span class="team-score">${f.home_score !== undefined ? f.home_score : '-'}</span>
+          </div>
+          <div class="team-row">
+            <img src="https://www.nrl.com/.theme/${f.away_theme}/badge.svg" class="team-logo" onerror="this.style.display='none'"/>
+            <span class="team-name">${f.away_team}</span>
+            <span class="team-score">${f.away_score !== undefined ? f.away_score : '-'}</span>
+          </div>
+        `;
+      }).join('');
+    } else {
+      matchHtml = `
           <div class="team-row">
             <img src="${homeLogo}" class="team-logo" onerror="this.style.display='none'"/>
             <span class="team-name">${homeTeam || 'Home'}</span>
             <span class="team-score">${homeScore !== undefined ? homeScore : '-'}</span>
           </div>
-          
           <div class="team-row">
             <img src="${awayLogo}" class="team-logo" onerror="this.style.display='none'"/>
             <span class="team-name">${awayTeam || 'Away'}</span>
             <span class="team-score">${awayScore !== undefined ? awayScore : '-'}</span>
           </div>
+      `;
+    }
+
+    this.content.innerHTML = `
+      <div class="nrl-score-wrapper">
+        <div class="header-row">
+          <span class="${showEntireRound ? '' : statusClass}">${showEntireRound ? 'Entire Round' : statusText}</span>
+          <span>${attrs.league || 'NRL'} ${attrs.round ? '- ' + attrs.round : ''}</span>
+        </div>
+        
+        <div class="teams-container">
+          ${matchHtml}
         </div>
 
+        ${!showEntireRound ? `
         <div class="details-section ${this.showDetails ? 'expanded' : ''}">
           <div style="font-size: 14px; font-weight: bold; margin-bottom: 8px;">Key Plays (Demo Data)</div>
           ${playsHtml}
         </div>
+        ` : ''}
       </div>
     `;
   }
@@ -295,6 +332,10 @@ class NRLScoreCardEditor extends HTMLElement {
         ></ha-entity-picker>
         <div style="display: flex; flex-direction: column; margin-top: 16px; gap: 8px;">
           <div style="display: flex; align-items: center;">
+            <ha-switch .checked=${this._config.show_entire_round === true} .configValue="show_entire_round" id="sw_round"></ha-switch>
+            <span style="margin-left: 8px;">Show Entire Round (Game by Game)</span>
+          </div>
+          <div style="display: flex; align-items: center; border-top: 1px solid var(--divider-color); margin-top: 4px; padding-top: 8px;">
             <ha-switch .checked=${this._config.show_advanced_plays === true} .configValue="show_advanced_plays" id="sw_adv"></ha-switch>
             <span style="margin-left: 8px;">Show Advanced Plays by Default</span>
           </div>
@@ -325,10 +366,10 @@ class NRLScoreCardEditor extends HTMLElement {
       picker.addEventListener('value-changed', this.valueChanged.bind(this));
     }
     
-    ['show_advanced_plays', 'show_event_tries', 'show_event_conversions', 'show_event_penalty_goals', 'show_event_sin_bins'].forEach(key => {
+    ['show_entire_round', 'show_advanced_plays', 'show_event_tries', 'show_event_conversions', 'show_event_penalty_goals', 'show_event_sin_bins'].forEach(key => {
       const el = this.querySelector(`[configValue="${key}"]`);
       if (el) {
-        if (key === 'show_advanced_plays') {
+        if (key === 'show_advanced_plays' || key === 'show_entire_round') {
           el.checked = this._config[key] === true;
         } else {
           el.checked = this._config[key] !== false;

@@ -80,6 +80,25 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
         away_team_data = match.get("awayTeam", {})
         clock = match.get("clock", {})
 
+        # Extract simplified fixture data for the whole round
+        round_fixtures = []
+        for f in fixtures:
+            home = f.get("homeTeam", {})
+            away = f.get("awayTeam", {})
+            clock = f.get("clock", {})
+            round_fixtures.append({
+                "home_team": home.get("nickName", "Unknown"),
+                "home_theme": home.get("theme", {}).get("key", "nrl"),
+                "home_score": home.get("score", 0),
+                "away_team": away.get("nickName", "Unknown"),
+                "away_theme": away.get("theme", {}).get("key", "nrl"),
+                "away_score": away.get("score", 0),
+                "match_state": f.get("matchState", "Unknown"),
+                "match_mode": f.get("matchMode", "Unknown"),
+                "game_time": clock.get("gameTime"),
+                "kick_off_time": clock.get("kickOffTimeLong"),
+            })
+
         parsed = {
             "match_mode": match.get("matchMode", "Unknown"),
             "match_state": match.get("matchState", "Unknown"),
@@ -93,6 +112,7 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
             "round": match.get("roundTitle"),
             "kick_off_time": clock.get("kickOffTimeLong"),
             "game_time": clock.get("gameTime"),
+            "round_fixtures": round_fixtures,
         }
         
         # Determine if we should poll faster if a game is live
