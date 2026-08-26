@@ -23,6 +23,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
+    import os
+    frontend_path = os.path.join(os.path.dirname(__file__), "frontend")
+    
+    # Register frontend directory for the custom card
+    hass.http.register_static_path(
+        "/nrl_scores_frontend",
+        frontend_path,
+        cache_headers=False,
+    )
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
