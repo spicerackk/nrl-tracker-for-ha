@@ -241,7 +241,7 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
                 ladder_out.append(pos_data)
                 
                 # Check if it's our team
-                if str(pos.get("next", {}).get("teamId")) == str(self.team_id) or team_nick in self.team_name:
+                if team_nick in self.team_name or self.team_name in team_nick:
                     ladder_position = idx + 1
                     team_form = pos.get("stats", {}).get("form")
 
