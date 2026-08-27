@@ -1,30 +1,30 @@
-class NRLLadderCard extends HTMLElement {
+﻿class NRLLadderCard extends HTMLElement {
   set hass(hass) {
     if (!this.content) {
-      this.innerHTML = 
+      this.innerHTML = \
         <ha-card>
           <div class="card-content" style="padding: 16px;">
             <div id="ladder-container"></div>
           </div>
         </ha-card>
-      ;
+      \;
       this.content = this.querySelector('#ladder-container');
     }
     
     if (!this.config || !this.config.entity) return;
     const stateObj = hass.states[this.config.entity];
     if (!stateObj) {
-      this.content.innerHTML = <div style="color: red;">Entity not found: </div>;
+      this.content.innerHTML = \<div style="color: red;">Entity not found: \</div>\;
       return;
     }
     
     const attrs = stateObj.attributes;
     if (!attrs.ladder || attrs.ladder.length === 0) {
-      this.content.innerHTML = <div style="text-align: center; color: var(--secondary-text-color);">No ladder data available.</div>;
+      this.content.innerHTML = \<div style="text-align: center; color: var(--secondary-text-color);">No ladder data available.</div>\;
       return;
     }
     
-    let html = 
+    let html = \
       <style>
         .ladder-table { width: 100%; border-collapse: collapse; text-align: center; font-size: 14px; }
         .ladder-table th { padding: 8px 4px; font-weight: bold; border-bottom: 1px solid var(--divider-color); color: var(--secondary-text-color); }
@@ -46,29 +46,29 @@ class NRLLadderCard extends HTMLElement {
           </tr>
         </thead>
         <tbody>
-    ;
+    \;
     
     attrs.ladder.forEach(team => {
-      html += 
+      html += \
         <tr>
-          <td style="text-align: left;"></td>
+          <td style="text-align: left;">\</td>
           <td>
             <div class="ladder-team">
-              <img src="" class="ladder-logo" onerror="this.style.display='none'">
-              
+              <img src="\" class="ladder-logo" onerror="this.style.display='none'">
+              \
             </div>
           </td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td style="font-weight: bold;"></td>
+          <td>\</td>
+          <td>\</td>
+          <td>\</td>
+          <td>\</td>
+          <td>\</td>
+          <td style="font-weight: bold;">\</td>
         </tr>
-      ;
+      \;
     });
     
-    html += </tbody></table>;
+    html += \</tbody></table>\;
     this.content.innerHTML = html;
   }
 

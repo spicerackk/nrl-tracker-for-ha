@@ -235,7 +235,8 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
                     "drawn": pos.get("stats", {}).get("drawn"),
                     "lost": pos.get("stats", {}).get("lost"),
                     "diff": pos.get("stats", {}).get("points difference"),
-                    "logo": "https://www.nrl.com/theme/nrl/logos/badge-" + team_theme_key + ".svg"
+                    "logo": "https://www.nrl.com/theme/nrl/logos/badge-" + team_theme_key + ".svg",
+                    "form": pos.get("stats", {}).get("form")
                 }
                 ladder_out.append(pos_data)
                 

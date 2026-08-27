@@ -318,7 +318,18 @@ class NRLScoreCard extends HTMLElement {
     let ladderAway = "";
     let formAway = "";
     
-    if (attrs.ladder_position) {
+    if (attrs.ladder && attrs.ladder.length > 0) {
+      const hTeam = attrs.ladder.find(t => t.team === homeTeam || homeTeam.includes(t.team));
+      if (hTeam) {
+        ladderHome = `<div class="ladder-pos">(${hTeam.position})</div>`;
+        if (matchState === 'PRE' && hTeam.form) formHome = `<div class="team-form">${hTeam.form}</div>`;
+      }
+      const aTeam = attrs.ladder.find(t => t.team === awayTeam || awayTeam.includes(t.team));
+      if (aTeam) {
+        ladderAway = `<div class="ladder-pos">(${aTeam.position})</div>`;
+        if (matchState === 'PRE' && aTeam.form) formAway = `<div class="team-form">${aTeam.form}</div>`;
+      }
+    } else if (attrs.ladder_position) {
       if (isHome) {
         ladderHome = `<div class="ladder-pos">(${attrs.ladder_position})</div>`;
         if (matchState === 'PRE' && attrs.team_form) formHome = `<div class="team-form">${attrs.team_form}</div>`;

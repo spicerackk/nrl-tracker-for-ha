@@ -93,6 +93,8 @@ class NRLScoreSensor(CoordinatorEntity[NRLDataUpdateCoordinator], SensorEntity):
             "away_team": away_team,
             "home_score": data.get("home_score"),
             "away_score": data.get("away_score"),
+            "home_theme": data.get("home_theme"),
+            "away_theme": data.get("away_theme"),
             "team_score": data.get("my_team_score"),
             "opponent_score": data.get("opponent_score"),
             "team_homeaway": "home" if is_home else "away",
