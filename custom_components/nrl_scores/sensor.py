@@ -101,8 +101,8 @@ class NRLScoreSensor(CoordinatorEntity[NRLDataUpdateCoordinator], SensorEntity):
             "opponent_score": data.get("opponent_score"),
             "team_homeaway": "home" if is_home else "away",
             "opponent_homeaway": "away" if is_home else "home",
-            "team_logo": "https://www.nrl.com/theme/nrl/logos/badge-" + (data.get("home_theme") or "nrl") + ".svg" if is_home else "https://www.nrl.com/theme/nrl/logos/badge-" + (data.get("away_theme") or "nrl") + ".svg",
-            "opponent_logo": "https://www.nrl.com/theme/nrl/logos/badge-" + (data.get("away_theme") or "nrl") + ".svg" if is_home else "https://www.nrl.com/theme/nrl/logos/badge-" + (data.get("home_theme") or "nrl") + ".svg",
+            "team_logo": "https://www.nrl.com/.theme/" + (data.get("home_theme") or "nrl") + "/badge.svg" if is_home else "https://www.nrl.com/.theme/" + (data.get("away_theme") or "nrl") + "/badge.svg",
+            "opponent_logo": "https://www.nrl.com/.theme/" + (data.get("away_theme") or "nrl") + "/badge.svg" if is_home else "https://www.nrl.com/.theme/" + (data.get("home_theme") or "nrl") + "/badge.svg",
             "quarter": data.get("match_state"),
             "clock": data.get("game_time"),
             "league": "NRL",
@@ -112,7 +112,8 @@ class NRLScoreSensor(CoordinatorEntity[NRLDataUpdateCoordinator], SensorEntity):
             
             # New Advanced Stats & Ladder Data
             "possession": data.get("possession"),
-            "completion_rate": data.get("completion_rate"),
+            "completion_rate_home": data.get("completion_rate_home"),
+            "completion_rate_away": data.get("completion_rate_away"),
             "ladder_position": data.get("ladder_position"),
             "team_form": data.get("team_form"),
             "ladder": data.get("ladder", [])

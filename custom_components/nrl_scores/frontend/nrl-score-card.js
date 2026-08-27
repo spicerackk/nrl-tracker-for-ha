@@ -181,11 +181,11 @@ class NRLScoreCard extends HTMLElement {
     }
 
     let homeTeam = attrs.home_team || (isHome ? attrs.team_name : attrs.opponent_name);
-    let homeLogo = "https://www.nrl.com/theme/nrl/logos/badge-" + (attrs.home_theme || "nrl") + ".svg";
+    let homeLogo = "https://www.nrl.com/.theme/" + (attrs.home_theme || "nrl") + "/badge.svg";
     let homeScore = attrs.home_score || 0;
 
     let awayTeam = attrs.away_team || (!isHome ? attrs.team_name : attrs.opponent_name);
-    let awayLogo = "https://www.nrl.com/theme/nrl/logos/badge-" + (attrs.away_theme || "nrl") + ".svg";
+    let awayLogo = "https://www.nrl.com/.theme/" + (attrs.away_theme || "nrl") + "/badge.svg";
     let awayScore = attrs.away_score || 0;
 
     const showEntireRound = this.config.show_entire_round === true;
@@ -215,8 +215,8 @@ class NRLScoreCard extends HTMLElement {
             fClass = 'status-final';
           }
           
-          let hLogo = "https://www.nrl.com/theme/nrl/logos/badge-" + f.home_theme + ".svg";
-          let aLogo = "https://www.nrl.com/theme/nrl/logos/badge-" + f.away_theme + ".svg";
+          let hLogo = "https://www.nrl.com/.theme/" + f.home_theme + "/badge.svg";
+          let aLogo = "https://www.nrl.com/.theme/" + f.away_theme + "/badge.svg";
 
           return `
             <div class="match-row">
@@ -280,14 +280,19 @@ class NRLScoreCard extends HTMLElement {
 
     // Advanced Stats HTML
     let statsHtml = '';
-    if (attrs.possession || attrs.completion_rate) {
+    if (attrs.possession || attrs.completion_rate_home) {
       let homePoss = attrs.possession ? (isHome ? attrs.possession : (100 - attrs.possession)) : 50;
       let awayPoss = 100 - homePoss;
-      let compHome = attrs.completion_rate ? attrs.completion_rate : 0; 
+      
+      // The API values are strings like "80" or "32/40"
+      let compHomeRaw = isHome ? (attrs.completion_rate_home || 0) : (attrs.completion_rate_away || 0);
+      let compAwayRaw = isHome ? (attrs.completion_rate_away || 0) : (attrs.completion_rate_home || 0);
+      
+      let compHomeVal = parseFloat(compHomeRaw) || 0;
+      let compAwayVal = parseFloat(compAwayRaw) || 0;
       
       let homeCol = this.getTeamColor(attrs.home_theme);
       let awayCol = this.getTeamColor(attrs.away_theme);
-      let myCol = this.getTeamColor(isHome ? attrs.home_theme : attrs.away_theme);
       
       statsHtml = `
         <div class="stat-row">
@@ -298,11 +303,16 @@ class NRLScoreCard extends HTMLElement {
           </div>
         </div>
         <div class="stat-row">
-          <div class="stat-title">Team Completion Rate</div>
-          <div class="stat-circle-container">
+          <div class="stat-title">Completion Rate</div>
+          <div class="stat-circle-container" style="display: flex; justify-content: center; gap: 30px;">
             <div>
-              <div class="stat-circle" style="--val: ${compHome}; --primary-color: ${myCol}">
-                <span class="stat-circle-val">${compHome}%</span>
+              <div class="stat-circle" style="--val: ${compHomeVal}; --primary-color: ${homeCol}">
+                <span class="stat-circle-val">${compHomeRaw}%</span>
+              </div>
+            </div>
+            <div>
+              <div class="stat-circle" style="--val: ${compAwayVal}; --primary-color: ${awayCol}">
+                <span class="stat-circle-val">${compAwayRaw}%</span>
               </div>
             </div>
           </div>

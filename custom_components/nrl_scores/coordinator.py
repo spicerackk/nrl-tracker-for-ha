@@ -204,7 +204,8 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
         
         # Extract advanced stats
         possession = None
-        completion_rate = None
+        completion_rate_home = None
+        completion_rate_away = None
         stats_groups = detailed_data.get("stats", {}).get("groups", [])
         for group in stats_groups:
             if group.get("title") == "Possession & Completions":
@@ -214,9 +215,10 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
                         val = stat.get("homeValue" if is_home else "awayValue", {}).get("value")
                         if val is not None: possession = val
                     elif stat.get("title") == "Completion Rate":
-                        is_home = (str(home_team_data.get("teamId")) == str(self.team_id))
-                        val = stat.get("homeValue" if is_home else "awayValue", {}).get("value")
-                        if val is not None: completion_rate = val
+                        h_val = stat.get("homeValue", {}).get("value")
+                        a_val = stat.get("awayValue", {}).get("value")
+                        if h_val is not None: completion_rate_home = h_val
+                        if a_val is not None: completion_rate_away = a_val
                         
         ladder_position = None
         team_form = None
@@ -235,7 +237,7 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
                     "drawn": pos.get("stats", {}).get("drawn"),
                     "lost": pos.get("stats", {}).get("lost"),
                     "diff": pos.get("stats", {}).get("points difference"),
-                    "logo": "https://www.nrl.com/theme/nrl/logos/badge-" + team_theme_key + ".svg",
+                    "logo": "https://www.nrl.com/.theme/" + team_theme_key + "/badge.svg",
                     "form": pos.get("stats", {}).get("form")
                 }
                 ladder_out.append(pos_data)
@@ -264,7 +266,8 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
             "round_fixtures": round_fixtures,
             "plays": plays,
             "possession": possession,
-            "completion_rate": completion_rate,
+            "completion_rate_home": completion_rate_home,
+            "completion_rate_away": completion_rate_away,
             "ladder_position": ladder_position,
             "team_form": team_form,
             "ladder": ladder_out,
