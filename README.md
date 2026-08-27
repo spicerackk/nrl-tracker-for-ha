@@ -4,9 +4,10 @@ A Home Assistant custom integration and companion Lovelace card for tracking NRL
 
 ## Features
 
-- **Real-time Scores:** Follows your favorite NRL team and updates scores live.
+- **Real-time Scores:** Follows your favorite team and updates scores live.
+- **Multi-Competition Support:** Track over 60 teams across the **NRL**, **NRLW**, **State of Origin (Men & Women)**, **Pacific Championships**, **World Cup**, and **Internationals**. Add the integration multiple times to track multiple teams!
 - **Companion Lovelace Card:** A beautiful, responsive custom card that displays the match state, team logos, and live clock.
-- **Advanced Plays (Mockup):** Click the card to expand a detailed view showing try scorers and penalties!
+- **Live Advanced Plays:** Click the card to expand a detailed view streaming live tries, penalty goals, conversions, and sin bins directly from the NRL Match Centre.
 - **Compatibility:** Sensor attributes are compatible with standard `ha-teamtracker` lovelace cards.
 - **Consolidated Repository:** Both the backend integration and frontend card are bundled in this single repository for easy installation.
 
