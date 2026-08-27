@@ -131,10 +131,10 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
             f_clock = f.get("clock", {})
             round_fixtures.append({
                 "home_team": home.get("nickName", "Unknown"),
-                "home_theme": home.get("theme", {}).get("key", "nrl"),
+                "home_theme": (home.get("theme") or {}).get("key", "nrl"),
                 "home_score": home.get("score", 0),
                 "away_team": away.get("nickName", "Unknown"),
-                "away_theme": away.get("theme", {}).get("key", "nrl"),
+                "away_theme": (away.get("theme") or {}).get("key", "nrl"),
                 "away_score": away.get("score", 0),
                 "match_state": f.get("matchState", "Unknown"),
                 "match_mode": f.get("matchMode", "Unknown"),
@@ -225,7 +225,7 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
             ladder_positions = ladder_data.get("positions", [])
             for idx, pos in enumerate(ladder_positions):
                 team_nick = pos.get("teamNickname", "Unknown")
-                team_theme_key = pos.get("theme", {}).get("key", "nrl")
+                team_theme_key = (pos.get("theme") or {}).get("key", "nrl")
                 pos_data = {
                     "position": idx + 1,
                     "team": team_nick,
@@ -249,8 +249,8 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
             "match_state": match.get("matchState", "Unknown"),
             "home_team": home_team_data.get("nickName", "Unknown"),
             "away_team": away_team_data.get("nickName", "Unknown"),
-            "home_theme": home_team_data.get("theme", {}).get("key", "nrl"),
-            "away_theme": away_team_data.get("theme", {}).get("key", "nrl"),
+            "home_theme": (home_team_data.get("theme") or {}).get("key", "nrl"),
+            "away_theme": (away_team_data.get("theme") or {}).get("key", "nrl"),
             "home_score": home_team_data.get("score", 0),
             "away_score": away_team_data.get("score", 0),
             "my_team_score": home_team_data.get("score", 0) if home_team_data.get("teamId") == self.team_id else away_team_data.get("score", 0),
