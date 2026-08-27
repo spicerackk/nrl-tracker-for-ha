@@ -137,7 +137,12 @@ class NRLScoreCard extends HTMLElement {
     if (showEntireRound) {
       let matchesHtml = '';
       if (attrs.round_fixtures && attrs.round_fixtures.length > 0) {
-        matchesHtml = attrs.round_fixtures.map(f => {
+        let fixturesToRender = attrs.round_fixtures;
+        if (this.config.hide_upcoming_matches === true) {
+          fixturesToRender = fixturesToRender.filter(f => f.match_mode === 'Live' || f.match_mode === 'Post');
+        }
+        
+        matchesHtml = fixturesToRender.map(f => {
           let fStatus = 'Upcoming';
           let fClass = 'status-upcoming';
           if (f.match_mode === 'Live') {
@@ -273,19 +278,30 @@ class NRLScoreCardEditor extends HTMLElement {
   init() {
     this.innerHTML = `
       <div class="card-config">
-        <ha-entity-picker
-          allow-custom-entity
-        ></ha-entity-picker>
-        <div style="display: flex; flex-direction: column; margin-top: 16px; gap: 8px;">
+        <div style="margin-bottom: 16px;">
+          <ha-entity-picker
+            label="Entity"
+            allow-custom-entity
+          ></ha-entity-picker>
+        </div>
+        
+        <div style="margin-bottom: 16px; display: flex; align-items: center;">
+          <ha-switch id="sw_round"></ha-switch>
+          <span style="margin-left: 8px;">Show Entire Round</span>
+        </div>
+        
+        <div id="div_upcoming" style="margin-bottom: 16px; display: flex; align-items: center; margin-left: 24px;">
+          <ha-switch id="sw_upcoming"></ha-switch>
+          <span style="margin-left: 8px;">Hide Upcoming Matches</span>
+        </div>
+
+        <div style="margin-bottom: 16px;">
           <div style="display: flex; align-items: center;">
-            <ha-switch id="sw_round"></ha-switch>
-            <span style="margin-left: 8px;">Show Entire Round (Game by Game)</span>
-          </div>
-          <div style="display: flex; align-items: center; border-top: 1px solid var(--divider-color); margin-top: 4px; padding-top: 8px;">
             <ha-switch id="sw_adv"></ha-switch>
-            <span style="margin-left: 8px;">Display Advanced Plays</span>
+            <span style="margin-left: 8px;">Display Advanced Plays (Expanded)</span>
           </div>
-          <div id="adv_settings" style="display: none; flex-direction: column; gap: 8px;">
+          
+          <div id="adv_settings" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
             <div style="display: flex; align-items: center; margin-left: 24px;">
               <ha-switch id="sw_tries"></ha-switch>
               <span style="margin-left: 8px;">Show Tries</span>
@@ -312,11 +328,15 @@ class NRLScoreCardEditor extends HTMLElement {
     picker.addEventListener('value-changed', (ev) => this.valueChanged('entity', ev.detail.value));
 
     this.setupSwitch('sw_round', 'show_entire_round', false);
+    this.setupSwitch('sw_upcoming', 'hide_upcoming_matches', false);
     this.setupSwitch('sw_adv', 'show_advanced_plays', false);
     this.setupSwitch('sw_tries', 'show_event_tries', true);
     this.setupSwitch('sw_conv', 'show_event_conversions', true);
     this.setupSwitch('sw_pen', 'show_event_penalty_goals', true);
     this.setupSwitch('sw_sin', 'show_event_sin_bins', true);
+    
+    this.querySelector('#sw_round').addEventListener('change', () => this.updateEditor());
+    this.querySelector('#sw_adv').addEventListener('change', () => this.updateEditor());
   }
 
   setupSwitch(id, key, defaultVal) {
@@ -334,6 +354,7 @@ class NRLScoreCardEditor extends HTMLElement {
     if (picker) picker.value = this._config.entity;
 
     this.updateSwitch('sw_round', 'show_entire_round', false);
+    this.updateSwitch('sw_upcoming', 'hide_upcoming_matches', false);
     this.updateSwitch('sw_adv', 'show_advanced_plays', false);
     this.updateSwitch('sw_tries', 'show_event_tries', true);
     this.updateSwitch('sw_conv', 'show_event_conversions', true);
@@ -341,8 +362,15 @@ class NRLScoreCardEditor extends HTMLElement {
     this.updateSwitch('sw_sin', 'show_event_sin_bins', true);
 
     const advSettings = this.querySelector('#adv_settings');
-    if (advSettings) {
-      advSettings.style.display = this._config.show_advanced_plays === true ? 'flex' : 'none';
+    const swAdv = this.querySelector('#sw_adv');
+    if (advSettings && swAdv) {
+      advSettings.style.display = swAdv.checked ? 'flex' : 'none';
+    }
+    
+    const divUpcoming = this.querySelector('#div_upcoming');
+    const swRound = this.querySelector('#sw_round');
+    if (divUpcoming && swRound) {
+      divUpcoming.style.display = swRound.checked ? 'flex' : 'none';
     }
   }
 
