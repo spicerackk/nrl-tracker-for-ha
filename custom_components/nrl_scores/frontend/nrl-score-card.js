@@ -258,22 +258,37 @@ class NRLScoreCard extends HTMLElement {
 
     let playsHtml = '';
     if (attrs.plays && attrs.plays.length > 0) {
-      playsHtml = attrs.plays.map(p => {
-        if (p.icon === 'T' && !showTries) return '';
-        if (p.icon === 'G' && !showConversions) return '';
-        if (p.icon === 'P' && !showPenalties) return '';
-        if (p.icon === 'SB' && !showSinBins) return '';
-        
-        return `
-          <div class="play-item">
-            <div class="play-time">${p.time}</div>
-            <div class="play-icon ${p.class}">${p.icon}</div>
-            <div class="play-desc">
-              <span class="play-player">${p.player}</span>
-              <span class="play-team">${p.team}</span>
-            </div>
-          </div>`;
-      }).join('');
+      let filteredPlays = attrs.plays.filter(p => {
+        if (p.icon === 'T' && !showTries) return false;
+        if (p.icon === 'G' && !showConversions) return false;
+        if (p.icon === 'P' && !showPenalties) return false;
+        if (p.icon === 'SB' && !showSinBins) return false;
+        return true;
+      });
+      
+      const maxPlays = this.config.max_key_plays !== undefined ? this.config.max_key_plays : 5;
+      if (maxPlays > 0 && filteredPlays.length > maxPlays) {
+        // Plays are reverse chronological (newest first), so we want the first maxPlays elements
+        filteredPlays = filteredPlays.slice(0, maxPlays);
+      } else if (maxPlays === 0) {
+        filteredPlays = [];
+      }
+      
+      if (filteredPlays.length > 0) {
+        playsHtml = filteredPlays.map(p => {
+          return `
+            <div class="play-item">
+              <div class="play-time">${p.time}</div>
+              <div class="play-icon ${p.class}">${p.icon}</div>
+              <div class="play-desc">
+                <span class="play-player">${p.player}</span>
+                <span class="play-team">${p.team}</span>
+              </div>
+            </div>`;
+        }).join('');
+      } else {
+        playsHtml = `<div style="text-align: center; color: var(--secondary-text-color); font-size: 14px;">No key plays available yet.</div>`;
+      }
     } else {
       playsHtml = `<div style="text-align: center; color: var(--secondary-text-color); font-size: 14px;">No key plays available yet.</div>`;
     }
@@ -397,13 +412,16 @@ class NRLScoreCard extends HTMLElement {
   }
 
   static getStubConfig() {
-    return { entity: "", show_event_tries: true, show_event_sin_bins: true, show_event_penalty_goals: true, show_event_conversions: true };
+    return { entity: "", show_event_tries: true, show_event_sin_bins: true, show_event_penalty_goals: true, show_event_conversions: true, max_key_plays: 5 };
   }
 }
 
 class NRLScoreCardEditor extends HTMLElement {
   setConfig(config) {
     this._config = config;
+    if (this.innerHTML) {
+      this.updateEditor();
+    }
   }
 
   configChanged(newConfig) {
@@ -420,7 +438,13 @@ class NRLScoreCardEditor extends HTMLElement {
   updateSwitch(id, key, defaultVal) {
     const el = this.querySelector('#' + id);
     if (el && this._config) {
-      el.checked = this._config[key] !== undefined ? this._config[key] : defaultVal;
+      const isChecked = this._config[key] !== undefined ? this._config[key] : defaultVal;
+      el.checked = isChecked;
+      if (isChecked) {
+        el.setAttribute('checked', '');
+      } else {
+        el.removeAttribute('checked');
+      }
     }
   }
 
@@ -448,6 +472,9 @@ class NRLScoreCardEditor extends HTMLElement {
           </div>
           
           <div id="adv_settings" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center; margin-left: 24px; margin-bottom: 8px;">
+              <ha-textfield id="tf_max_plays" label="Max Key Plays" type="number" min="0"></ha-textfield>
+            </div>
             <div style="display: flex; align-items: center; margin-left: 24px;">
               <ha-switch id="sw_tries"></ha-switch>
               <span style="margin-left: 8px;">Show Tries</span>
@@ -487,6 +514,13 @@ class NRLScoreCardEditor extends HTMLElement {
     this.setupSwitch('sw_pen', 'show_event_penalty_goals', true);
     this.setupSwitch('sw_sin', 'show_event_sin_bins', true);
     
+    const tfMaxPlays = this.querySelector('#tf_max_plays');
+    if (tfMaxPlays) {
+      tfMaxPlays.addEventListener('change', (ev) => {
+        this.valueChanged('max_key_plays', parseInt(ev.target.value, 10));
+      });
+    }
+    
     this.querySelector('#sw_round').addEventListener('change', () => this.updateEditor());
     this.querySelector('#sw_adv').addEventListener('change', () => this.updateEditor());
   }
@@ -519,6 +553,11 @@ class NRLScoreCardEditor extends HTMLElement {
     this.updateSwitch('sw_conv', 'show_event_conversions', true);
     this.updateSwitch('sw_pen', 'show_event_penalty_goals', true);
     this.updateSwitch('sw_sin', 'show_event_sin_bins', true);
+
+    const tfMaxPlays = this.querySelector('#tf_max_plays');
+    if (tfMaxPlays) {
+      tfMaxPlays.value = this._config.max_key_plays !== undefined ? this._config.max_key_plays : 5;
+    }
 
     const advSettings = this.querySelector('#adv_settings');
     const swAdv = this.querySelector('#sw_adv');

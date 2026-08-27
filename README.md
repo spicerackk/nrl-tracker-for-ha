@@ -54,10 +54,13 @@ Now you can add the cards to your dashboard!
    * Hide Upcoming Matches (so you only see live/past matches)
    * Display Advanced Stats (Possession % & Completion Rate)
    * Display Advanced Plays (Tries, Sin Bins, etc.)
+   * Set Max Key Plays to display (defaults to the latest 5 plays)
+
+*Note: You can turn on either Advanced Plays or Advanced Stats in the settings, and you can **click anywhere on the score card** to toggle between viewing the Plays, Stats, or the default minimal view!*
 
 ### 2. NRL Ladder Card
 1. Add a **Custom: NRL Ladder Card** to your dashboard.
-2. Select any NRL Score sensor you have configured. It will automatically pull the full ladder for that competition and display it beautifully on your dashboard!
+2. Select any NRL Score sensor you have configured using the convenient **Entity dropdown** in the visual editor. It will automatically pull the full ladder for that competition and display it beautifully on your dashboard!
 
 ## Smart Home Automations
 

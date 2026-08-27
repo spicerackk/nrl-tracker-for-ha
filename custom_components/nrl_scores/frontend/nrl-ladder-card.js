@@ -82,8 +82,57 @@ class NRLLadderCard extends HTMLElement {
   getCardSize() {
     return 10;
   }
+
+  static getConfigElement() {
+    return document.createElement("nrl-ladder-card-editor");
+  }
+
+  static getStubConfig() {
+    return { entity: "" };
+  }
 }
 
+class NRLLadderCardEditor extends HTMLElement {
+  setConfig(config) {
+    this._config = config;
+    if (this.innerHTML) {
+      this.updateEditor();
+    }
+  }
+
+  configChanged(newConfig) {
+    const event = new Event("config-changed", { bubbles: true, composed: true });
+    event.detail = { config: newConfig };
+    this.dispatchEvent(event);
+  }
+
+  connectedCallback() {
+    if (!this.innerHTML) {
+      this.innerHTML = `
+        <div style="margin-bottom: 16px;">
+          <ha-entity-picker label="Entity" allow-custom-entity></ha-entity-picker>
+        </div>
+      `;
+      const picker = this.querySelector('ha-entity-picker');
+      picker.includeDomains = ["sensor"];
+      picker.addEventListener('value-changed', (ev) => {
+        if (!this._config) return;
+        this.configChanged({ ...this._config, entity: ev.detail.value });
+      });
+    }
+    this.updateEditor();
+  }
+
+  updateEditor() {
+    if (!this.innerHTML || !this._config) return;
+    const picker = this.querySelector('ha-entity-picker');
+    if (picker) {
+      picker.value = this._config.entity;
+    }
+  }
+}
+
+customElements.define('nrl-ladder-card-editor', NRLLadderCardEditor);
 customElements.define('nrl-ladder-card', NRLLadderCard);
 window.customCards = window.customCards || [];
 window.customCards.push({
