@@ -104,6 +104,7 @@ class NRLScoreSensor(CoordinatorEntity[NRLDataUpdateCoordinator], SensorEntity):
             "quarter": data.get("match_state"),
             "clock": data.get("game_time"),
             "league": "NRL",
+            "round": data.get("round"),
             "round_fixtures": data.get("round_fixtures", []),
             "plays": data.get("plays", []),
             
