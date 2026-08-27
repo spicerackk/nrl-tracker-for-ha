@@ -1,4 +1,4 @@
-console.log("NRL Score Card - Loading Version 3");
+console.log("NRL Score Card - Loading Version 4");
 class NRLScoreCard extends HTMLElement {
   constructor() {
     super();
@@ -19,6 +19,7 @@ class NRLScoreCard extends HTMLElement {
     }
     this.config = config;
     this.showDetails = this.config.show_advanced_plays === true;
+    this.showStats = this.config.show_advanced_stats === true;
     if (this.content) {
       this.updateCard();
     }
@@ -27,8 +28,11 @@ class NRLScoreCard extends HTMLElement {
   createCard() {
     this.card = document.createElement('ha-card');
     
-    this.card.addEventListener('click', () => {
+    this.card.addEventListener('click', (ev) => {
+      // Don't toggle if clicking on switches in editor
+      if (ev.composedPath().find(e => e.tagName === 'HA-SWITCH')) return;
       this.showDetails = !this.showDetails;
+      this.showStats = !this.showStats;
       this.updateCard();
     });
 
@@ -39,14 +43,24 @@ class NRLScoreCard extends HTMLElement {
       ha-card {
         cursor: pointer;
         overflow: hidden;
+        position: relative;
       }
-      .card { position: relative; overflow: hidden; padding: 16px 16px 20px; font-weight: 400; border-radius: var(--ha-card-border-radius, 10px); }
+      .bg-tint {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        opacity: 0.1;
+        z-index: 0;
+        transition: background 0.5s ease;
+      }
+      .card { position: relative; overflow: hidden; padding: 16px 16px 20px; font-weight: 400; border-radius: var(--ha-card-border-radius, 10px); z-index: 1; }
       .title { text-align: center; font-size: 1.2em; font-weight: 500; margin-bottom: 4px; }
       .subtitle { font-size: 1.1em; line-height: 1.1em; text-align: center; width: 100%; margin-bottom: 4px; color: var(--secondary-text-color); }
       
       .card-content { display: flex; justify-content: space-evenly; align-items: center; text-align: center; position: relative; z-index: 1; margin-top: 12px; }
-      .team { text-align: center; width: 35%; display: flex; flex-direction: column; align-items: center; }
-      .logo { max-height: 6.5em; max-width: 90px; object-fit: contain; }
+      .team { text-align: center; width: 35%; display: flex; flex-direction: column; align-items: center; position: relative; }
+      .ladder-pos { font-size: 0.85em; font-weight: bold; color: var(--secondary-text-color); margin-bottom: 4px; }
+      .team-form { font-size: 0.85em; font-weight: bold; margin-top: 4px; background: rgba(128,128,128,0.2); padding: 2px 6px; border-radius: 4px; letter-spacing: 1px;}
+      .logo { max-height: 6.5em; max-width: 90px; object-fit: contain; z-index: 2; }
       .name { font-size: 1.4em; margin-top: 8px; font-weight: 500; }
       .score { font-size: 3em; opacity: 1; text-align: center; line-height: 1; font-weight: bold; }
       .divider { font-size: 2.5em; text-align: center; margin: 0 4px; color: var(--secondary-text-color); }
@@ -55,21 +69,18 @@ class NRLScoreCard extends HTMLElement {
       .status-final { color: var(--primary-text-color); }
       .status-upcoming { color: var(--secondary-text-color); }
 
-      .details-section {
+      .details-section, .stats-section {
         margin-top: 16px;
         padding-top: 16px;
         border-top: 1px solid var(--divider-color);
         display: none;
       }
-      .details-section.expanded {
+      .expanded {
         display: block;
       }
-      .play-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 8px 0;
-      }
+      
+      /* Advanced Plays */
+      .play-item { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
       .play-time { font-weight: bold; color: var(--secondary-text-color); width: 30px; }
       .play-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: bold; }
       .icon-try { background-color: #4CAF50; }
@@ -79,6 +90,17 @@ class NRLScoreCard extends HTMLElement {
       .play-desc { display: flex; flex-direction: column; }
       .play-player { font-size: 14px; font-weight: 500; }
       .play-team { font-size: 12px; color: var(--secondary-text-color); }
+
+      /* Advanced Stats */
+      .stat-row { display: flex; flex-direction: column; align-items: center; margin-bottom: 16px; width: 100%; }
+      .stat-title { font-weight: bold; margin-bottom: 8px; }
+      .stat-bar-container { width: 100%; height: 16px; background: var(--secondary-background-color, #e0e0e0); border-radius: 8px; overflow: hidden; display: flex; }
+      .stat-bar-home { background: var(--primary-color, #03a9f4); height: 100%; display: flex; align-items: center; justify-content: flex-start; padding-left: 8px; color: white; font-size: 10px; font-weight: bold;}
+      .stat-bar-away { background: var(--accent-color, #ff9800); height: 100%; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; color: white; font-size: 10px; font-weight: bold;}
+      .stat-circle-container { display: flex; justify-content: space-around; width: 100%; }
+      .stat-circle { position: relative; width: 80px; height: 80px; border-radius: 50%; background: conic-gradient(var(--primary-color) calc(var(--val) * 1%), var(--secondary-background-color, #e0e0e0) 0); display: flex; align-items: center; justify-content: center; }
+      .stat-circle::before { content: ""; position: absolute; inset: 6px; background: var(--card-background-color, white); border-radius: 50%; }
+      .stat-circle-val { position: relative; font-weight: bold; font-size: 16px; }
 
       /* Round Mode */
       .round-wrapper { padding: 16px; }
@@ -96,8 +118,40 @@ class NRLScoreCard extends HTMLElement {
     `;
 
     this.card.appendChild(this.styleEl);
+    this.bgEl = document.createElement('div');
+    this.bgEl.className = 'bg-tint';
+    this.card.appendChild(this.bgEl);
     this.card.appendChild(this.content);
     this.shadowRoot.appendChild(this.card);
+  }
+
+  getTeamColor(themeKey) {
+    const TEAM_COLORS = {
+      "broncos": "#7a003c", "bulldogs": "#0055a5", "cowboys": "#002b5c",
+      "dolphins": "#e02213", "dragons": "#e02213", "eels": "#00529b",
+      "knights": "#002d62", "panthers": "#000000", "rabbitohs": "#004B2A",
+      "raiders": "#00A650", "roosters": "#00205b", "sea-eagles": "#6c0022",
+      "sharks": "#00a9d8", "storm": "#3c2a61", "titans": "#002b5c",
+      "warriors": "#000000", "wests-tigers": "#f68b1f", "blues": "#56a0d3",
+      "maroons": "#7b001d", "kangaroos": "#004b36"
+    };
+    return TEAM_COLORS[themeKey] || "transparent";
+  }
+
+  formatCountdown(kickoffTime) {
+    if (!kickoffTime) return 'Upcoming';
+    // kickoffTime is a timestamp string from NRL API
+    const kickoff = new Date(kickoffTime).getTime();
+    if (isNaN(kickoff)) return 'Upcoming';
+    
+    const diff = kickoff - Date.now();
+    if (diff < 0) return 'Starting soon';
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    if (hours > 48) {
+      return `Starts in ${Math.floor(hours/24)} days`;
+    }
+    return `Starts in ${hours}h ${mins}m`;
   }
 
   updateCard() {
@@ -122,17 +176,25 @@ class NRLScoreCard extends HTMLElement {
     } else if (matchState === 'POST') {
       statusText = 'Final';
       statusClass = 'status-final';
+    } else if (matchState === 'PRE' && attrs.kickoff_in) {
+      statusText = this.formatCountdown(attrs.kickoff_in);
     }
 
-    let homeTeam = isHome ? attrs.team_name : attrs.opponent_name;
-    let homeLogo = isHome ? attrs.team_logo : attrs.opponent_logo;
-    let homeScore = isHome ? attrs.team_score : attrs.opponent_score;
+    let homeTeam = attrs.home_team || (isHome ? attrs.team_name : attrs.opponent_name);
+    let homeLogo = "https://www.nrl.com/theme/nrl/logos/badge-" + (attrs.home_theme || "nrl") + ".svg";
+    let homeScore = attrs.home_score || 0;
 
-    let awayTeam = !isHome ? attrs.team_name : attrs.opponent_name;
-    let awayLogo = !isHome ? attrs.team_logo : attrs.opponent_logo;
-    let awayScore = !isHome ? attrs.team_score : attrs.opponent_score;
+    let awayTeam = attrs.away_team || (!isHome ? attrs.team_name : attrs.opponent_name);
+    let awayLogo = "https://www.nrl.com/theme/nrl/logos/badge-" + (attrs.away_theme || "nrl") + ".svg";
+    let awayScore = attrs.away_score || 0;
 
     const showEntireRound = this.config.show_entire_round === true;
+
+    // Dynamic background based on winning team
+    let bgColor = "transparent";
+    if (homeScore > awayScore) bgColor = this.getTeamColor(attrs.home_theme);
+    else if (awayScore > homeScore) bgColor = this.getTeamColor(attrs.away_theme);
+    this.bgEl.style.background = bgColor !== "transparent" ? `linear-gradient(135deg, ${bgColor}88 0%, transparent 100%)` : "";
 
     if (showEntireRound) {
       let matchesHtml = '';
@@ -152,48 +214,51 @@ class NRLScoreCard extends HTMLElement {
             fStatus = 'Final';
             fClass = 'status-final';
           }
+          
+          let hLogo = "https://www.nrl.com/theme/nrl/logos/badge-" + f.home_theme + ".svg";
+          let aLogo = "https://www.nrl.com/theme/nrl/logos/badge-" + f.away_theme + ".svg";
+
           return `
             <div class="match-row">
               <div class="match-status ${fClass}">${fStatus}</div>
               <div class="match-teams">
                 <div class="match-team home">
-                  <img src="https://www.nrl.com/.theme/${f.home_theme}/badge.svg" class="match-logo" onerror="this.style.display='none'"/>
                   <span class="match-name">${f.home_team}</span>
-                  <span class="match-score">${f.home_score !== undefined ? f.home_score : '-'}</span>
+                  <img src="${hLogo}" class="match-logo" onerror="this.style.display='none'">
                 </div>
+                <div class="match-score">${f.home_score}</div>
                 <div class="match-divider">-</div>
+                <div class="match-score">${f.away_score}</div>
                 <div class="match-team away">
-                  <img src="https://www.nrl.com/.theme/${f.away_theme}/badge.svg" class="match-logo" onerror="this.style.display='none'"/>
                   <span class="match-name">${f.away_team}</span>
-                  <span class="match-score">${f.away_score !== undefined ? f.away_score : '-'}</span>
+                  <img src="${aLogo}" class="match-logo" onerror="this.style.display='none'">
                 </div>
               </div>
             </div>
           `;
         }).join('');
       } else {
-        matchesHtml = `<div style="text-align: center; padding: 16px;">No round fixtures available.</div>`;
+        matchesHtml = `<div style="text-align: center; color: var(--secondary-text-color);">No fixtures available.</div>`;
       }
-      
+
       this.content.innerHTML = `
         <div class="round-wrapper">
-          <div class="round-header">${attrs.league || 'NRL'} ${attrs.round ? '- ' + attrs.round : ''}</div>
+          <div class="round-header">${attrs.round || 'Current Round'}</div>
           ${matchesHtml}
         </div>
       `;
       return;
     }
 
+    // Default Single Match View
     const showTries = this.config.show_event_tries !== false;
     const showSinBins = this.config.show_event_sin_bins !== false;
     const showPenalties = this.config.show_event_penalty_goals !== false;
     const showConversions = this.config.show_event_conversions !== false;
 
     let playsHtml = '';
-    
     if (attrs.plays && attrs.plays.length > 0) {
       playsHtml = attrs.plays.map(p => {
-        // filter based on config
         if (p.icon === 'T' && !showTries) return '';
         if (p.icon === 'G' && !showConversions) return '';
         if (p.icon === 'P' && !showPenalties) return '';
@@ -213,76 +278,136 @@ class NRLScoreCard extends HTMLElement {
       playsHtml = `<div style="text-align: center; color: var(--secondary-text-color); font-size: 14px;">No key plays available yet.</div>`;
     }
 
+    // Advanced Stats HTML
+    let statsHtml = '';
+    if (attrs.possession || attrs.completion_rate) {
+      let homePoss = attrs.possession ? (isHome ? attrs.possession : (100 - attrs.possession)) : 50;
+      let awayPoss = 100 - homePoss;
+      let compHome = attrs.completion_rate ? attrs.completion_rate : 0; 
+      
+      let homeCol = this.getTeamColor(attrs.home_theme);
+      let awayCol = this.getTeamColor(attrs.away_theme);
+      let myCol = this.getTeamColor(isHome ? attrs.home_theme : attrs.away_theme);
+      
+      statsHtml = `
+        <div class="stat-row">
+          <div class="stat-title">Possession %</div>
+          <div class="stat-bar-container">
+            <div class="stat-bar-home" style="width: ${homePoss}%; background: ${homeCol};">${homePoss}%</div>
+            <div class="stat-bar-away" style="width: ${awayPoss}%; background: ${awayCol};">${awayPoss}%</div>
+          </div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-title">Team Completion Rate</div>
+          <div class="stat-circle-container">
+            <div>
+              <div class="stat-circle" style="--val: ${compHome}; --primary-color: ${myCol}">
+                <span class="stat-circle-val">${compHome}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    } else {
+      statsHtml = `<div style="text-align: center; color: var(--secondary-text-color); font-size: 14px;">Stats available during match.</div>`;
+    }
+    
+    // Ladder & Form labels
+    let ladderHome = "";
+    let formHome = "";
+    let ladderAway = "";
+    let formAway = "";
+    
+    if (attrs.ladder_position) {
+      if (isHome) {
+        ladderHome = `<div class="ladder-pos">(${attrs.ladder_position})</div>`;
+        if (matchState === 'PRE' && attrs.team_form) formHome = `<div class="team-form">${attrs.team_form}</div>`;
+      } else {
+        ladderAway = `<div class="ladder-pos">(${attrs.ladder_position})</div>`;
+        if (matchState === 'PRE' && attrs.team_form) formAway = `<div class="team-form">${attrs.team_form}</div>`;
+      }
+    }
+
     this.content.innerHTML = `
       <div class="card">
-        <div class="title">${attrs.league || 'NRL'} ${attrs.round ? '- ' + attrs.round : ''}</div>
+        <div class="title">${attrs.league || 'NRL'} - ${attrs.round || 'Round'}</div>
         <div class="subtitle">${attrs.venue || ''}</div>
         
         <div class="card-content">
           <div class="team">
-            <img class="logo" src="${homeLogo}" onerror="this.style.display='none'"/>
-            <div class="name">${homeTeam || 'Home'}</div>
+            ${ladderHome}
+            <img src="${homeLogo}" class="logo" onerror="this.style.display='none'">
+            <div class="name">${homeTeam}</div>
+            ${formHome}
           </div>
           
-          <div class="score">${homeScore !== undefined ? homeScore : '-'}</div>
-          <div class="divider">-</div>
-          <div class="score">${awayScore !== undefined ? awayScore : '-'}</div>
+          ${matchState === 'PRE' ? 
+            `<div class="play-clock ${statusClass}">${statusText}</div>` : 
+            `<div class="score">${homeScore}</div>
+             <div class="divider">-</div>
+             <div class="score">${awayScore}</div>`
+          }
           
           <div class="team">
-            <img class="logo" src="${awayLogo}" onerror="this.style.display='none'"/>
-            <div class="name">${awayTeam || 'Away'}</div>
+            ${ladderAway}
+            <img src="${awayLogo}" class="logo" onerror="this.style.display='none'">
+            <div class="name">${awayTeam}</div>
+            ${formAway}
           </div>
         </div>
         
-        <div class="play-clock ${statusClass}">${statusText}</div>
-
+        ${matchState !== 'PRE' ? `<div class="play-clock ${statusClass}">${statusText}</div>` : ''}
+        
         <div class="details-section ${this.showDetails ? 'expanded' : ''}">
-          <div style="font-size: 14px; font-weight: bold; margin-bottom: 8px; text-align: center;">Key Plays</div>
+          <div style="font-weight: bold; margin-bottom: 12px; text-align: center;">Key Plays</div>
           ${playsHtml}
+        </div>
+        
+        <div class="stats-section ${this.showStats ? 'expanded' : ''}">
+          <div style="font-weight: bold; margin-bottom: 12px; text-align: center;">Match Stats</div>
+          ${statsHtml}
         </div>
       </div>
     `;
   }
 
-  getCardSize() {
-    return this.showDetails ? 4 : 2;
+  static getConfigElement() {
+    return document.createElement("nrl-score-card-editor");
   }
 
-  static getConfigElement() {
-    return document.createElement('nrl-score-card-editor');
+  static getStubConfig() {
+    return { entity: "", show_event_tries: true, show_event_sin_bins: true, show_event_penalty_goals: true, show_event_conversions: true };
   }
 }
-
-customElements.define('nrl-score-card', NRLScoreCard);
 
 class NRLScoreCardEditor extends HTMLElement {
   setConfig(config) {
     this._config = config;
-    if (!this._initialized) {
-      this.init();
-      this._initialized = true;
-    }
-    this.updateEditor();
   }
 
-  set hass(hass) {
-    this._hass = hass;
-    if (!this._initialized) {
-      this.init();
-      this._initialized = true;
+  configChanged(newConfig) {
+    const event = new Event("config-changed", { bubbles: true, composed: true });
+    event.detail = { config: newConfig };
+    this.dispatchEvent(event);
+  }
+
+  valueChanged(key, value) {
+    if (!this._config) return;
+    this.configChanged({ ...this._config, [key]: value });
+  }
+  
+  updateSwitch(id, key, defaultVal) {
+    const el = this.querySelector('#' + id);
+    if (el && this._config) {
+      el.checked = this._config[key] !== undefined ? this._config[key] : defaultVal;
     }
-    const picker = this.querySelector('ha-entity-picker');
-    if (picker) picker.hass = hass;
   }
 
   init() {
     this.innerHTML = `
       <div class="card-config">
         <div style="margin-bottom: 16px;">
-          <ha-entity-picker
-            label="Entity"
-            allow-custom-entity
-          ></ha-entity-picker>
+          <ha-entity-picker label="Entity" allow-custom-entity></ha-entity-picker>
         </div>
         
         <div style="margin-bottom: 16px; display: flex; align-items: center;">
@@ -320,6 +445,11 @@ class NRLScoreCardEditor extends HTMLElement {
             </div>
           </div>
         </div>
+        
+        <div style="margin-bottom: 16px; display: flex; align-items: center;">
+          <ha-switch id="sw_stats"></ha-switch>
+          <span style="margin-left: 8px;">Display Advanced Stats (Possession & Completion)</span>
+        </div>
       </div>
     `;
 
@@ -330,6 +460,7 @@ class NRLScoreCardEditor extends HTMLElement {
     this.setupSwitch('sw_round', 'show_entire_round', false);
     this.setupSwitch('sw_upcoming', 'hide_upcoming_matches', false);
     this.setupSwitch('sw_adv', 'show_advanced_plays', false);
+    this.setupSwitch('sw_stats', 'show_advanced_stats', false);
     this.setupSwitch('sw_tries', 'show_event_tries', true);
     this.setupSwitch('sw_conv', 'show_event_conversions', true);
     this.setupSwitch('sw_pen', 'show_event_penalty_goals', true);
@@ -340,15 +471,21 @@ class NRLScoreCardEditor extends HTMLElement {
   }
 
   setupSwitch(id, key, defaultVal) {
-    const el = this.querySelector(`#${id}`);
-    if (!el) return;
-    el.addEventListener('change', (ev) => {
-      this.valueChanged(key, ev.target.checked);
-    });
+    const el = this.querySelector('#' + id);
+    if (el) {
+      el.addEventListener('change', (ev) => this.valueChanged(key, ev.target.checked));
+    }
+  }
+
+  connectedCallback() {
+    if (!this.querySelector('.card-config')) {
+      this.init();
+    }
+    this.updateEditor();
   }
 
   updateEditor() {
-    if (!this._config) return;
+    if (!this.innerHTML || !this._config) return;
     
     const picker = this.querySelector('ha-entity-picker');
     if (picker) picker.value = this._config.entity;
@@ -356,6 +493,7 @@ class NRLScoreCardEditor extends HTMLElement {
     this.updateSwitch('sw_round', 'show_entire_round', false);
     this.updateSwitch('sw_upcoming', 'hide_upcoming_matches', false);
     this.updateSwitch('sw_adv', 'show_advanced_plays', false);
+    this.updateSwitch('sw_stats', 'show_advanced_stats', false);
     this.updateSwitch('sw_tries', 'show_event_tries', true);
     this.updateSwitch('sw_conv', 'show_event_conversions', true);
     this.updateSwitch('sw_pen', 'show_event_penalty_goals', true);
@@ -373,36 +511,13 @@ class NRLScoreCardEditor extends HTMLElement {
       divUpcoming.style.display = swRound.checked ? 'flex' : 'none';
     }
   }
-
-  updateSwitch(id, key, defaultVal) {
-    const el = this.querySelector(`#${id}`);
-    if (el) {
-      const val = this._config[key];
-      el.checked = val !== undefined ? val : defaultVal;
-    }
-  }
-
-  valueChanged(key, value) {
-    if (this._config[key] === value) return;
-    
-    const newConfig = { ...this._config };
-    newConfig[key] = value;
-    this._config = newConfig;
-
-    const event = new CustomEvent('config-changed', {
-      detail: { config: newConfig },
-      bubbles: true,
-      composed: true,
-    });
-    this.dispatchEvent(event);
-  }
 }
-customElements.define('nrl-score-card-editor', NRLScoreCardEditor);
-
+customElements.define("nrl-score-card-editor", NRLScoreCardEditor);
+customElements.define('nrl-score-card', NRLScoreCard);
 window.customCards = window.customCards || [];
 window.customCards.push({
-  type: 'nrl-score-card',
-  name: 'NRL Score Card',
+  type: "nrl-score-card",
+  name: "NRL Score Card",
   preview: true,
-  description: 'Custom Lovelace card for displaying NRL matches and key plays.',
+  description: "A custom card to display NRL scores and match states."
 });

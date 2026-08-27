@@ -60,7 +60,6 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
                         response.raise_for_status()
                         data = await response.json()
                         
-                    # Now we need to parse data to find the active match
                     fixtures = data.get("fixtures", [])
                     if not fixtures:
                         return {}
@@ -71,6 +70,8 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
                     match = live_match or pre_match or post_match
                     
                     round_fixtures_data = []
+                    detailed_data = {}
+                    ladder_data = {}
                     
                     if match:
                         round_title = match.get("roundTitle", "")
@@ -81,20 +82,16 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
                             except:
                                 pass
                         
-                        # Build URL for the round
                         round_url = f"https://www.nrl.com/draw/data?competition={competition}&season={SEASON}"
                         if round_num:
                             round_url += f"&round={round_num}"
                             
-                        # Fetch round data
                         async with session.get(round_url) as round_resp:
                             round_resp.raise_for_status()
                             round_data = await round_resp.json()
                             round_fixtures_data = round_data.get("fixtures", [])
                             
-                        # Fetch detailed match data for advanced plays
                         match_centre_url = match.get("matchCentreUrl")
-                        detailed_data = {}
                         if match_centre_url:
                             detailed_url = f"https://www.nrl.com{match_centre_url}data"
                             try:
@@ -104,11 +101,20 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
                             except Exception as err:
                                 _LOGGER.error(f"Error fetching detailed match data: {err}")
                                 
-                    return self._parse_data(match, round_fixtures_data, detailed_data)
+                    # Fetch ladder
+                    ladder_url = f"https://www.nrl.com/ladder/data?competition={competition}"
+                    try:
+                        async with session.get(ladder_url) as ladder_resp:
+                            ladder_resp.raise_for_status()
+                            ladder_data = await ladder_resp.json()
+                    except Exception as err:
+                        pass
+                                
+                    return self._parse_data(match, round_fixtures_data, detailed_data, ladder_data)
         except Exception as err:
             raise UpdateFailed(f"Error communicating with API: {err}")
 
-    def _parse_data(self, match: dict, round_fixtures_data: list, detailed_data: dict) -> dict:
+    def _parse_data(self, match: dict, round_fixtures_data: list, detailed_data: dict, ladder_data: dict) -> dict:
         """Parse the NRL API JSON response."""
         if not match:
             return {}
@@ -140,7 +146,6 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
         plays = []
         timeline = detailed_data.get("timeline", [])
         
-        # Build player dict
         players_dict = {}
         for p in detailed_data.get("homeTeam", {}).get("players", []):
             players_dict[p.get("playerId")] = p.get("firstName", "") + " " + p.get("lastName", "")
@@ -196,6 +201,48 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
                 })
         
         plays.reverse()
+        
+        # Extract advanced stats
+        possession = None
+        completion_rate = None
+        stats_groups = detailed_data.get("stats", {}).get("groups", [])
+        for group in stats_groups:
+            if group.get("title") == "Possession & Completions":
+                for stat in group.get("stats", []):
+                    if stat.get("title") == "Possession %":
+                        is_home = (home_team_data.get("teamId") == self.team_id)
+                        val = stat.get("homeValue" if is_home else "awayValue", {}).get("value")
+                        if val is not None: possession = val
+                    elif stat.get("title") == "Completion Rate":
+                        is_home = (home_team_data.get("teamId") == self.team_id)
+                        val = stat.get("homeValue" if is_home else "awayValue", {}).get("value")
+                        if val is not None: completion_rate = val
+                        
+        ladder_position = None
+        team_form = None
+        ladder_out = []
+        if ladder_data:
+            ladder_positions = ladder_data.get("positions", [])
+            for idx, pos in enumerate(ladder_positions):
+                team_nick = pos.get("teamNickname", "Unknown")
+                team_theme_key = pos.get("theme", {}).get("key", "nrl")
+                pos_data = {
+                    "position": idx + 1,
+                    "team": team_nick,
+                    "points": pos.get("stats", {}).get("points"),
+                    "played": pos.get("stats", {}).get("played"),
+                    "wins": pos.get("stats", {}).get("wins"),
+                    "drawn": pos.get("stats", {}).get("drawn"),
+                    "lost": pos.get("stats", {}).get("lost"),
+                    "diff": pos.get("stats", {}).get("points difference"),
+                    "logo": "https://www.nrl.com/theme/nrl/logos/badge-" + team_theme_key + ".svg"
+                }
+                ladder_out.append(pos_data)
+                
+                # Check if it's our team
+                if str(pos.get("next", {}).get("teamId")) == str(self.team_id) or team_nick in self.team_name:
+                    ladder_position = idx + 1
+                    team_form = pos.get("stats", {}).get("form")
 
         parsed = {
             "match_mode": match.get("matchMode", "Unknown"),
@@ -206,15 +253,22 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
             "away_theme": away_team_data.get("theme", {}).get("key", "nrl"),
             "home_score": home_team_data.get("score", 0),
             "away_score": away_team_data.get("score", 0),
+            "my_team_score": home_team_data.get("score", 0) if home_team_data.get("teamId") == self.team_id else away_team_data.get("score", 0),
+            "opponent_score": away_team_data.get("score", 0) if home_team_data.get("teamId") == self.team_id else home_team_data.get("score", 0),
             "venue": match.get("venue"),
+            "venue_city": match.get("venueCity"),
             "round": match.get("roundTitle"),
             "kick_off_time": clock.get("kickOffTimeLong"),
             "game_time": clock.get("gameTime"),
             "round_fixtures": round_fixtures,
             "plays": plays,
+            "possession": possession,
+            "completion_rate": completion_rate,
+            "ladder_position": ladder_position,
+            "team_form": team_form,
+            "ladder": ladder_out,
         }
         
-        # Determine if we should poll faster if a game is live
         if parsed.get("match_mode") == MATCH_MODE_LIVE:
             self.update_interval = timedelta(seconds=SCAN_INTERVAL_LIVE)
         else:
