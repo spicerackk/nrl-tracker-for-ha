@@ -210,11 +210,11 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
             if group.get("title") == "Possession & Completions":
                 for stat in group.get("stats", []):
                     if stat.get("title") == "Possession %":
-                        is_home = (home_team_data.get("teamId") == self.team_id)
+                        is_home = (str(home_team_data.get("teamId")) == str(self.team_id))
                         val = stat.get("homeValue" if is_home else "awayValue", {}).get("value")
                         if val is not None: possession = val
                     elif stat.get("title") == "Completion Rate":
-                        is_home = (home_team_data.get("teamId") == self.team_id)
+                        is_home = (str(home_team_data.get("teamId")) == str(self.team_id))
                         val = stat.get("homeValue" if is_home else "awayValue", {}).get("value")
                         if val is not None: completion_rate = val
                         
@@ -254,8 +254,8 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
             "away_theme": (away_team_data.get("theme") or {}).get("key", "nrl"),
             "home_score": home_team_data.get("score", 0),
             "away_score": away_team_data.get("score", 0),
-            "my_team_score": home_team_data.get("score", 0) if home_team_data.get("teamId") == self.team_id else away_team_data.get("score", 0),
-            "opponent_score": away_team_data.get("score", 0) if home_team_data.get("teamId") == self.team_id else home_team_data.get("score", 0),
+            "my_team_score": home_team_data.get("score", 0) if str(home_team_data.get("teamId")) == str(self.team_id) else away_team_data.get("score", 0),
+            "opponent_score": away_team_data.get("score", 0) if str(home_team_data.get("teamId")) == str(self.team_id) else home_team_data.get("score", 0),
             "venue": match.get("venue"),
             "venue_city": match.get("venueCity"),
             "round": match.get("roundTitle"),

@@ -62,7 +62,9 @@ class NRLScoreSensor(CoordinatorEntity[NRLDataUpdateCoordinator], SensorEntity):
         # Determine if my team is home or away
         home_team = data.get("home_team")
         away_team = data.get("away_team")
-        is_home = (home_team == my_team)
+        is_home = False
+        if home_team and my_team:
+            is_home = (home_team in my_team or my_team in home_team)
         
         if is_home:
             team_name = home_team
