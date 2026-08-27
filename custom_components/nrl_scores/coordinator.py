@@ -92,11 +92,23 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
                             round_data = await round_resp.json()
                             round_fixtures_data = round_data.get("fixtures", [])
                             
-                    return self._parse_data(match, round_fixtures_data)
+                        # Fetch detailed match data for advanced plays
+                        match_centre_url = match.get("matchCentreUrl")
+                        detailed_data = {}
+                        if match_centre_url:
+                            detailed_url = f"https://www.nrl.com{match_centre_url}data"
+                            try:
+                                async with session.get(detailed_url) as detailed_resp:
+                                    detailed_resp.raise_for_status()
+                                    detailed_data = await detailed_resp.json()
+                            except Exception as err:
+                                _LOGGER.error(f"Error fetching detailed match data: {err}")
+                                
+                    return self._parse_data(match, round_fixtures_data, detailed_data)
         except Exception as err:
             raise UpdateFailed(f"Error communicating with API: {err}")
 
-    def _parse_data(self, match: dict, round_fixtures_data: list) -> dict:
+    def _parse_data(self, match: dict, round_fixtures_data: list, detailed_data: dict) -> dict:
         """Parse the NRL API JSON response."""
         if not match:
             return {}
@@ -124,6 +136,67 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
                 "kick_off_time": f_clock.get("kickOffTimeLong"),
             })
 
+        # Extract timeline plays
+        plays = []
+        timeline = detailed_data.get("timeline", [])
+        
+        # Build player dict
+        players_dict = {}
+        for p in detailed_data.get("homeTeam", {}).get("players", []):
+            players_dict[p.get("playerId")] = p.get("firstName", "") + " " + p.get("lastName", "")
+        for p in detailed_data.get("awayTeam", {}).get("players", []):
+            players_dict[p.get("playerId")] = p.get("firstName", "") + " " + p.get("lastName", "")
+            
+        for t in timeline:
+            play_type = t.get("type")
+            title = t.get("title", "")
+            if play_type in ["Try", "Goal", "SinBin"] or "Sin Bin" in title or "Penalty" in title:
+                if play_type == "GoalMissed":
+                    continue
+                    
+                player_name = players_dict.get(t.get("playerId"), "Unknown Player")
+                team_id = t.get("teamId")
+                team_name = home_team_data.get("nickName", "Unknown") if team_id == home_team_data.get("teamId") else away_team_data.get("nickName", "Unknown")
+                
+                game_seconds = t.get("gameSeconds", 0)
+                minutes = game_seconds // 60
+                
+                play_icon = "T"
+                play_class = "icon-try"
+                
+                if play_type == "Try":
+                    play_icon = "T"
+                    play_class = "icon-try"
+                elif play_type == "Goal":
+                    if "Penalty" in title:
+                        play_icon = "P"
+                        play_class = "icon-penalty"
+                    else:
+                        play_icon = "G"
+                        play_class = "icon-goal"
+                elif play_type == "SinBin" or "Sin Bin" in title:
+                    play_icon = "SB"
+                    play_class = "icon-sinbin"
+                else:
+                    if "Penalty" in title:
+                        play_icon = "P"
+                        play_class = "icon-penalty"
+                    else:
+                        continue
+                    
+                formatted_player = f"{player_name} ({title.split('-')[0]})" if play_type == "Goal" else player_name
+                plays.append({
+                    "time": f"{minutes}'",
+                    "icon": play_icon,
+                    "class": play_class,
+                    "player": formatted_player,
+                    "team": team_name,
+                    "play_type": play_type,
+                    "title": title
+                })
+        
+        plays.reverse()
+
         parsed = {
             "match_mode": match.get("matchMode", "Unknown"),
             "match_state": match.get("matchState", "Unknown"),
@@ -138,6 +211,7 @@ class NRLDataUpdateCoordinator(DataUpdateCoordinator):
             "kick_off_time": clock.get("kickOffTimeLong"),
             "game_time": clock.get("gameTime"),
             "round_fixtures": round_fixtures,
+            "plays": plays,
         }
         
         # Determine if we should poll faster if a game is live

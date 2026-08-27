@@ -101,7 +101,8 @@ class NRLScoreSensor(CoordinatorEntity[NRLDataUpdateCoordinator], SensorEntity):
             "location": data.get("venue"),
             "clock": data.get("game_time"),
             "quarter": data.get("match_state"),  # Maps things like HalfTime to the quarter field
-            "round_fixtures": data.get("round_fixtures", [])
+            "round_fixtures": data.get("round_fixtures", []),
+            "plays": data.get("plays", [])
         }
         
         return attrs

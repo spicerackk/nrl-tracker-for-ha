@@ -186,65 +186,26 @@ class NRLScoreCard extends HTMLElement {
 
     let playsHtml = '';
     
-    // DEMO DATA AS PER ORIGINAL SCRIPT
-    if (showTries) {
-      playsHtml += `
-      <div class="play-item">
-        <div class="play-time">58'</div>
-        <div class="play-icon icon-try">T</div>
-        <div class="play-desc">
-          <span class="play-player">Reece Walsh</span>
-          <span class="play-team">Broncos</span>
-        </div>
-      </div>`;
-    }
-    
-    if (showConversions) {
-      playsHtml += `
-      <div class="play-item">
-        <div class="play-time">59'</div>
-        <div class="play-icon icon-goal">G</div>
-        <div class="play-desc">
-          <span class="play-player">Adam Reynolds (Conv)</span>
-          <span class="play-team">Broncos</span>
-        </div>
-      </div>`;
-    }
-    
-    if (showPenalties) {
-      playsHtml += `
-      <div class="play-item">
-        <div class="play-time">42'</div>
-        <div class="play-icon icon-penalty">P</div>
-        <div class="play-desc">
-          <span class="play-player">Nathan Cleary (Pen)</span>
-          <span class="play-team">Panthers</span>
-        </div>
-      </div>`;
-    }
-    
-    if (showSinBins) {
-      playsHtml += `
-      <div class="play-item">
-        <div class="play-time">32'</div>
-        <div class="play-icon icon-sinbin">SB</div>
-        <div class="play-desc">
-          <span class="play-player">Jarome Luai (Sin Bin)</span>
-          <span class="play-team">Panthers</span>
-        </div>
-      </div>`;
-    }
-    
-    if (showTries) {
-      playsHtml += `
-      <div class="play-item">
-        <div class="play-time">28'</div>
-        <div class="play-icon icon-try">T</div>
-        <div class="play-desc">
-          <span class="play-player">Brian To'o</span>
-          <span class="play-team">Panthers</span>
-        </div>
-      </div>`;
+    if (attrs.plays && attrs.plays.length > 0) {
+      playsHtml = attrs.plays.map(p => {
+        // filter based on config
+        if (p.icon === 'T' && !showTries) return '';
+        if (p.icon === 'G' && !showConversions) return '';
+        if (p.icon === 'P' && !showPenalties) return '';
+        if (p.icon === 'SB' && !showSinBins) return '';
+        
+        return `
+          <div class="play-item">
+            <div class="play-time">${p.time}</div>
+            <div class="play-icon ${p.class}">${p.icon}</div>
+            <div class="play-desc">
+              <span class="play-player">${p.player}</span>
+              <span class="play-team">${p.team}</span>
+            </div>
+          </div>`;
+      }).join('');
+    } else {
+      playsHtml = `<div style="text-align: center; color: var(--secondary-text-color); font-size: 14px;">No key plays available yet.</div>`;
     }
 
     this.content.innerHTML = `

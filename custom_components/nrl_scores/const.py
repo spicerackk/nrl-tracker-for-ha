@@ -55,6 +55,10 @@ TEAMS: dict[str, dict[str, int]] = {
     "NSW Blues": {"id": 500146, "comp": 116},
     "QLD Maroons": {"id": 500147, "comp": 116},
     
+    # Women's State of Origin
+    "NSW Blues (Women's)": {"id": 500315, "comp": 156},
+    "QLD Maroons (Women's)": {"id": 500314, "comp": 156},
+    
     # Internationals
     "Kangaroos": {"id": 500115, "comp": 133},
 }
