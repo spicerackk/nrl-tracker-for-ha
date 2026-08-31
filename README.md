@@ -1,4 +1,6 @@
-# NRL Scores Integration & Custom Card
+# NRL Tracker for Home Assistant
+
+![NRL Tracker Card](images/preview.png)
 
 A Home Assistant custom integration and companion Lovelace cards for tracking NRL matches, scores, ladders, and advanced plays (tries, penalties, conversions, stats).
 

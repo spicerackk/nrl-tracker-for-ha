@@ -455,48 +455,77 @@ class NRLScoreCardEditor extends HTMLElement {
           <ha-entity-picker label="Entity" allow-custom-entity></ha-entity-picker>
         </div>
         
-        <div style="margin-bottom: 16px; display: flex; align-items: center;">
+        <h3>Card Settings</h3>
+        <div style="margin-bottom: 8px; display: flex; align-items: center;">
+          <ha-switch id="sw_round_name"></ha-switch>
+          <span style="margin-left: 8px;">Show Round Name and Number</span>
+        </div>
+        <div style="margin-bottom: 8px; display: flex; align-items: center;">
+          <ha-switch id="sw_stadium"></ha-switch>
+          <span style="margin-left: 8px;">Show Stadium Name</span>
+        </div>
+        <div style="margin-bottom: 8px; display: flex; align-items: center;">
+          <ha-switch id="sw_logos"></ha-switch>
+          <span style="margin-left: 8px;">Show Logos</span>
+        </div>
+        <div style="margin-bottom: 8px; display: flex; align-items: center;">
+          <ha-switch id="sw_countdown"></ha-switch>
+          <span style="margin-left: 8px;">Show Countdown</span>
+        </div>
+        <div style="margin-bottom: 8px; display: flex; align-items: center;">
+          <ha-switch id="sw_form"></ha-switch>
+          <span style="margin-left: 8px;">Show Form</span>
+        </div>
+        <div style="margin-bottom: 8px; display: flex; align-items: center;">
           <ha-switch id="sw_round"></ha-switch>
           <span style="margin-left: 8px;">Show Entire Round</span>
         </div>
-        
-        <div id="div_upcoming" style="margin-bottom: 16px; display: flex; align-items: center; margin-left: 24px;">
-          <ha-switch id="sw_upcoming"></ha-switch>
-          <span style="margin-left: 8px;">Hide Upcoming Matches</span>
+        <div style="margin-bottom: 8px; display: flex; align-items: center;">
+          <ha-switch id="sw_table_pos"></ha-switch>
+          <span style="margin-left: 8px;">Show Table Position</span>
         </div>
 
-        <div style="margin-bottom: 16px;">
-          <div style="display: flex; align-items: center;">
-            <ha-switch id="sw_adv"></ha-switch>
-            <span style="margin-left: 8px;">Display Advanced Plays (Expanded)</span>
+        <h3>Display Key Plays (Expanded)</h3>
+        <div style="margin-bottom: 8px; display: flex; align-items: center;">
+          <ha-switch id="sw_adv"></ha-switch>
+          <span style="margin-left: 8px;">Enable Key Plays</span>
+        </div>
+        <div id="adv_settings" style="margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px; margin-left: 24px;">
+          <div style="display: flex; align-items: center; margin-bottom: 8px;">
+            <ha-textfield id="tf_max_plays" label="Max Key Plays" type="number" min="0"></ha-textfield>
           </div>
-          
-          <div id="adv_settings" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
-            <div style="display: flex; align-items: center; margin-left: 24px; margin-bottom: 8px;">
-              <ha-textfield id="tf_max_plays" label="Max Key Plays" type="number" min="0"></ha-textfield>
-            </div>
-            <div style="display: flex; align-items: center; margin-left: 24px;">
-              <ha-switch id="sw_tries"></ha-switch>
-              <span style="margin-left: 8px;">Show Tries</span>
-            </div>
-            <div style="display: flex; align-items: center; margin-left: 24px;">
-              <ha-switch id="sw_conv"></ha-switch>
-              <span style="margin-left: 8px;">Show Conversions</span>
-            </div>
-            <div style="display: flex; align-items: center; margin-left: 24px;">
-              <ha-switch id="sw_pen"></ha-switch>
-              <span style="margin-left: 8px;">Show Penalty Goals</span>
-            </div>
-            <div style="display: flex; align-items: center; margin-left: 24px;">
-              <ha-switch id="sw_sin"></ha-switch>
-              <span style="margin-left: 8px;">Show Sin Bins</span>
-            </div>
+          <div style="display: flex; align-items: center;">
+            <ha-switch id="sw_tries"></ha-switch>
+            <span style="margin-left: 8px;">Show Tries</span>
+          </div>
+          <div style="display: flex; align-items: center;">
+            <ha-switch id="sw_conv"></ha-switch>
+            <span style="margin-left: 8px;">Show Conversions</span>
+          </div>
+          <div style="display: flex; align-items: center;">
+            <ha-switch id="sw_pen"></ha-switch>
+            <span style="margin-left: 8px;">Show Penalty Goals</span>
+          </div>
+          <div style="display: flex; align-items: center;">
+            <ha-switch id="sw_sin"></ha-switch>
+            <span style="margin-left: 8px;">Show Sin Bins</span>
           </div>
         </div>
-        
-        <div style="margin-bottom: 16px; display: flex; align-items: center;">
+
+        <h3>Display Advanced Stats</h3>
+        <div style="margin-bottom: 8px; display: flex; align-items: center;">
           <ha-switch id="sw_stats"></ha-switch>
-          <span style="margin-left: 8px;">Display Advanced Stats (Possession & Completion)</span>
+          <span style="margin-left: 8px;">Enable Advanced Stats</span>
+        </div>
+        <div id="stats_settings" style="margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px; margin-left: 24px;">
+          <div style="display: flex; align-items: center;">
+            <ha-switch id="sw_possession"></ha-switch>
+            <span style="margin-left: 8px;">Show Possession</span>
+          </div>
+          <div style="display: flex; align-items: center;">
+            <ha-switch id="sw_completion"></ha-switch>
+            <span style="margin-left: 8px;">Show Completion</span>
+          </div>
         </div>
       </div>
     `;
@@ -505,14 +534,26 @@ class NRLScoreCardEditor extends HTMLElement {
     picker.includeDomains = ["sensor"];
     picker.addEventListener('value-changed', (ev) => this.valueChanged('entity', ev.detail.value));
 
+    // Card Settings
+    this.setupSwitch('sw_round_name', 'show_round_name', true);
+    this.setupSwitch('sw_stadium', 'show_stadium', true);
+    this.setupSwitch('sw_logos', 'show_logos', true);
+    this.setupSwitch('sw_countdown', 'show_countdown', true);
+    this.setupSwitch('sw_form', 'show_form', true);
     this.setupSwitch('sw_round', 'show_entire_round', false);
-    this.setupSwitch('sw_upcoming', 'hide_upcoming_matches', false);
+    this.setupSwitch('sw_table_pos', 'show_table_position', true);
+
+    // Key Plays
     this.setupSwitch('sw_adv', 'show_advanced_plays', false);
-    this.setupSwitch('sw_stats', 'show_advanced_stats', false);
     this.setupSwitch('sw_tries', 'show_event_tries', true);
     this.setupSwitch('sw_conv', 'show_event_conversions', true);
     this.setupSwitch('sw_pen', 'show_event_penalty_goals', true);
     this.setupSwitch('sw_sin', 'show_event_sin_bins', true);
+    
+    // Stats
+    this.setupSwitch('sw_stats', 'show_advanced_stats', false);
+    this.setupSwitch('sw_possession', 'show_stat_possession', true);
+    this.setupSwitch('sw_completion', 'show_stat_completion', true);
     
     const tfMaxPlays = this.querySelector('#tf_max_plays');
     if (tfMaxPlays) {
@@ -521,8 +562,8 @@ class NRLScoreCardEditor extends HTMLElement {
       });
     }
     
-    this.querySelector('#sw_round').addEventListener('change', () => this.updateEditor());
     this.querySelector('#sw_adv').addEventListener('change', () => this.updateEditor());
+    this.querySelector('#sw_stats').addEventListener('change', () => this.updateEditor());
   }
 
   setupSwitch(id, key, defaultVal) {
@@ -545,14 +586,23 @@ class NRLScoreCardEditor extends HTMLElement {
     const picker = this.querySelector('ha-entity-picker');
     if (picker) picker.value = this._config.entity;
 
+    this.updateSwitch('sw_round_name', 'show_round_name', true);
+    this.updateSwitch('sw_stadium', 'show_stadium', true);
+    this.updateSwitch('sw_logos', 'show_logos', true);
+    this.updateSwitch('sw_countdown', 'show_countdown', true);
+    this.updateSwitch('sw_form', 'show_form', true);
     this.updateSwitch('sw_round', 'show_entire_round', false);
-    this.updateSwitch('sw_upcoming', 'hide_upcoming_matches', false);
+    this.updateSwitch('sw_table_pos', 'show_table_position', true);
+
     this.updateSwitch('sw_adv', 'show_advanced_plays', false);
-    this.updateSwitch('sw_stats', 'show_advanced_stats', false);
     this.updateSwitch('sw_tries', 'show_event_tries', true);
     this.updateSwitch('sw_conv', 'show_event_conversions', true);
     this.updateSwitch('sw_pen', 'show_event_penalty_goals', true);
     this.updateSwitch('sw_sin', 'show_event_sin_bins', true);
+
+    this.updateSwitch('sw_stats', 'show_advanced_stats', false);
+    this.updateSwitch('sw_possession', 'show_stat_possession', true);
+    this.updateSwitch('sw_completion', 'show_stat_completion', true);
 
     const tfMaxPlays = this.querySelector('#tf_max_plays');
     if (tfMaxPlays) {
@@ -565,10 +615,10 @@ class NRLScoreCardEditor extends HTMLElement {
       advSettings.style.display = swAdv.checked ? 'flex' : 'none';
     }
     
-    const divUpcoming = this.querySelector('#div_upcoming');
-    const swRound = this.querySelector('#sw_round');
-    if (divUpcoming && swRound) {
-      divUpcoming.style.display = swRound.checked ? 'flex' : 'none';
+    const statsSettings = this.querySelector('#stats_settings');
+    const swStats = this.querySelector('#sw_stats');
+    if (statsSettings && swStats) {
+      statsSettings.style.display = swStats.checked ? 'flex' : 'none';
     }
   }
 }

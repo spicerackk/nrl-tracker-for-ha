@@ -1,5 +1,5 @@
 {
-  "name": "NRL Scores",
+  "name": "NRL Tracker for Home Assistant",
   "render_readme": true,
   "iot_class": "Cloud Polling"
 }
