@@ -361,12 +361,11 @@ class NRLScoreCard extends HTMLElement {
           </div>
           
           ${matchState === 'PRE' ? 
-            `<div class="play-clock ${statusClass}">${statusText}</div>` : 
+            (showCountdown ? `<div class="play-clock ${statusClass}">${statusText}</div>` : '') : 
             `<div class="score">${homeScore}</div>
              <div class="divider">-</div>
              <div class="score">${awayScore}</div>`
           }
-          ${showCountdown ? `<div class="match-time">${matchTimeHtml}</div>` : ''}
           
           <div class="team">
             ${ladderAway}
