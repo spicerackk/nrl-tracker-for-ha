@@ -140,18 +140,26 @@ class NRLScoreCard extends HTMLElement {
 
   formatCountdown(kickoffTime) {
     if (!kickoffTime) return 'Upcoming';
-    // kickoffTime is a timestamp string from NRL API
-    const kickoff = new Date(kickoffTime).getTime();
+    const dateObj = new Date(kickoffTime);
+    const kickoff = dateObj.getTime();
     if (isNaN(kickoff)) return 'Upcoming';
     
     const diff = kickoff - Date.now();
     if (diff < 0) return 'Starting soon';
+    
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    const timeOpts = { hour: 'numeric', minute: '2-digit' };
+    const timeStr = dateObj.toLocaleTimeString(undefined, timeOpts);
+    const dayStr = dateObj.toLocaleDateString(undefined, { weekday: 'short' });
+    
     if (hours > 48) {
-      return `Starts in ${Math.floor(hours/24)} days`;
+      const dateStr = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      return `${dayStr} ${dateStr}, ${timeStr} (in ${Math.floor(hours/24)} days)`;
     }
-    return `Starts in ${hours}h ${mins}m`;
+    
+    return `${dayStr} ${timeStr} (in ${hours}h ${mins}m)`;
   }
 
   updateCard() {
