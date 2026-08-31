@@ -165,16 +165,6 @@ class NRLScoreCard extends HTMLElement {
     }
 
     const attrs = stateObj.attributes;
-    
-    // Card Settings Configs
-    const showRoundName = this.config.show_round_name !== false;
-    const showStadium = this.config.show_stadium !== false;
-    const showLogos = this.config.show_logos !== false;
-    const showCountdown = this.config.show_countdown !== false;
-    const showForm = this.config.show_form !== false;
-    const showEntireRound = this.config.show_entire_round === true;
-    const showTablePos = this.config.show_table_position !== false;
-
     const isHome = attrs.team_homeaway === 'home';
     const matchState = stateObj.state;
     
@@ -197,6 +187,8 @@ class NRLScoreCard extends HTMLElement {
     let awayTeam = attrs.away_team || (!isHome ? attrs.team_name : attrs.opponent_name);
     let awayLogo = "https://www.nrl.com/.theme/" + (attrs.away_theme || "nrl") + "/badge.svg";
     let awayScore = attrs.away_score || 0;
+
+    const showEntireRound = this.config.show_entire_round === true;
 
     // Dynamic background based on winning team
     let bgColor = "transparent";
@@ -317,8 +309,33 @@ class NRLScoreCard extends HTMLElement {
       let homeCol = this.getTeamColor(attrs.home_theme);
       let awayCol = this.getTeamColor(attrs.away_theme);
       
-      statsHtml = `\n        ${this.config.show_stat_possession !== false ? `<div class="stat-row"><div class="stat-title">Possession %</div><div class="stat-bar-container"><div class="stat-bar-home" style="width: ${homePoss}%; background: ${homeCol};">${homePoss}%</div><div class="stat-bar-away" style="width: ${awayPoss}%; background: ${awayCol};">${awayPoss}%</div></div></div>` : ""}\n        ${this.config.show_stat_completion !== false ? `<div class="stat-row"><div class="stat-title">Completion Rate</div><div class="stat-circle-container" style="display: flex; justify-content: center; gap: 30px;"><div><div class="stat-circle" style="--val: ${compHomeVal}; --primary-color: ${homeCol}"><span class="stat-circle-val">${compHomeRaw}%</span></div></div><div><div class="stat-circle" style="--val: ${compAwayVal}; --primary-color: ${awayCol}"><span class="stat-circle-val">${compAwayRaw}%</span></div></div></div></div>` : ""}\n      `;
-    } else { statsHtml = `<div style="text-align: center; color: var(--secondary-text-color); font-size: 14px;">Stats available during match.</div>`; }
+      statsHtml = `
+        <div class="stat-row">
+          <div class="stat-title">Possession %</div>
+          <div class="stat-bar-container">
+            <div class="stat-bar-home" style="width: ${homePoss}%; background: ${homeCol};">${homePoss}%</div>
+            <div class="stat-bar-away" style="width: ${awayPoss}%; background: ${awayCol};">${awayPoss}%</div>
+          </div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-title">Completion Rate</div>
+          <div class="stat-circle-container" style="display: flex; justify-content: center; gap: 30px;">
+            <div>
+              <div class="stat-circle" style="--val: ${compHomeVal}; --primary-color: ${homeCol}">
+                <span class="stat-circle-val">${compHomeRaw}%</span>
+              </div>
+            </div>
+            <div>
+              <div class="stat-circle" style="--val: ${compAwayVal}; --primary-color: ${awayCol}">
+                <span class="stat-circle-val">${compAwayRaw}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    } else {
+      statsHtml = `<div style="text-align: center; color: var(--secondary-text-color); font-size: 14px;">Stats available during match.</div>`;
+    }
     
     // Ladder & Form labels
     let ladderHome = "";
@@ -329,33 +346,33 @@ class NRLScoreCard extends HTMLElement {
     if (attrs.ladder && attrs.ladder.length > 0) {
       const hTeam = attrs.ladder.find(t => t.team === homeTeam || homeTeam.includes(t.team) || t.team.includes(homeTeam));
       if (hTeam) {
-        if(showTablePos) ladderHome = `<div class="ladder-pos">(${hTeam.position})</div>`;
-        if (showForm && matchState === 'PRE' && hTeam.form) formHome = `<div class="team-form">${hTeam.form}</div>`;
+        ladderHome = `<div class="ladder-pos">(${hTeam.position})</div>`;
+        if (matchState === 'PRE' && hTeam.form) formHome = `<div class="team-form">${hTeam.form}</div>`;
       }
       const aTeam = attrs.ladder.find(t => t.team === awayTeam || awayTeam.includes(t.team) || t.team.includes(awayTeam));
       if (aTeam) {
-        if(showTablePos) ladderAway = `<div class="ladder-pos">(${aTeam.position})</div>`;
-        if (showForm && matchState === 'PRE' && aTeam.form) formAway = `<div class="team-form">${aTeam.form}</div>`;
+        ladderAway = `<div class="ladder-pos">(${aTeam.position})</div>`;
+        if (matchState === 'PRE' && aTeam.form) formAway = `<div class="team-form">${aTeam.form}</div>`;
       }
     } else if (attrs.ladder_position) {
       if (isHome) {
-        if(showTablePos) ladderHome = `<div class="ladder-pos">(${attrs.ladder_position})</div>`;
-        if (showForm && matchState === 'PRE' && attrs.team_form) formHome = `<div class="team-form">${attrs.team_form}</div>`;
+        ladderHome = `<div class="ladder-pos">(${attrs.ladder_position})</div>`;
+        if (matchState === 'PRE' && attrs.team_form) formHome = `<div class="team-form">${attrs.team_form}</div>`;
       } else {
-        if(showTablePos) ladderAway = `<div class="ladder-pos">(${attrs.ladder_position})</div>`;
-        if (showForm && matchState === 'PRE' && attrs.team_form) formAway = `<div class="team-form">${attrs.team_form}</div>`;
+        ladderAway = `<div class="ladder-pos">(${attrs.ladder_position})</div>`;
+        if (matchState === 'PRE' && attrs.team_form) formAway = `<div class="team-form">${attrs.team_form}</div>`;
       }
     }
 
     this.content.innerHTML = `
       <div class="card">
-        ${showRoundName ? `<div class="title">${attrs.league || 'NRL'} - ${attrs.round || 'Round'}</div>` : ''}
-        ${showStadium ? `<div class="subtitle">${attrs.venue || ''}</div>` : ''}
+        <div class="title">${attrs.league || 'NRL'} - ${attrs.round || 'Round'}</div>
+        <div class="subtitle">${attrs.venue || ''}</div>
         
         <div class="card-content">
           <div class="team">
             ${ladderHome}
-            ${showLogos ? `<img src="${homeLogo}" class="logo" onerror="this.style.display='none'">` : ''}
+            <img src="${homeLogo}" class="logo" onerror="this.style.display='none'">
             <div class="name">${homeTeam}</div>
             ${formHome}
           </div>
@@ -366,11 +383,10 @@ class NRLScoreCard extends HTMLElement {
              <div class="divider">-</div>
              <div class="score">${awayScore}</div>`
           }
-          ${showCountdown ? `<div class="match-time">${matchTimeHtml}</div>` : ''}
           
           <div class="team">
             ${ladderAway}
-            ${showLogos ? `<img src="${awayLogo}" class="logo" onerror="this.style.display='none'">` : ''}
+            <img src="${awayLogo}" class="logo" onerror="this.style.display='none'">
             <div class="name">${awayTeam}</div>
             ${formAway}
           </div>
@@ -439,37 +455,37 @@ class NRLScoreCardEditor extends HTMLElement {
           <ha-entity-picker label="Entity" allow-custom-entity></ha-entity-picker>
         </div>
         
-        <h3>Card settings</h3>
+        <h3>Card Settings</h3>
         <div style="margin-bottom: 8px; display: flex; align-items: center;">
           <ha-switch id="sw_round_name"></ha-switch>
-          <span style="margin-left: 8px;">Round name and number</span>
+          <span style="margin-left: 8px;">Show Round Name and Number</span>
         </div>
         <div style="margin-bottom: 8px; display: flex; align-items: center;">
           <ha-switch id="sw_stadium"></ha-switch>
-          <span style="margin-left: 8px;">Stadium</span>
+          <span style="margin-left: 8px;">Show Stadium Name</span>
         </div>
         <div style="margin-bottom: 8px; display: flex; align-items: center;">
           <ha-switch id="sw_logos"></ha-switch>
-          <span style="margin-left: 8px;">Logos</span>
+          <span style="margin-left: 8px;">Show Logos</span>
         </div>
         <div style="margin-bottom: 8px; display: flex; align-items: center;">
           <ha-switch id="sw_countdown"></ha-switch>
-          <span style="margin-left: 8px;">Countdown</span>
+          <span style="margin-left: 8px;">Show Countdown</span>
         </div>
         <div style="margin-bottom: 8px; display: flex; align-items: center;">
           <ha-switch id="sw_form"></ha-switch>
-          <span style="margin-left: 8px;">Form</span>
-        </div>
-        <div style="margin-bottom: 8px; display: flex; align-items: center;">
-          <ha-switch id="sw_table_pos"></ha-switch>
-          <span style="margin-left: 8px;">Table Position</span>
+          <span style="margin-left: 8px;">Show Form</span>
         </div>
         <div style="margin-bottom: 8px; display: flex; align-items: center;">
           <ha-switch id="sw_round"></ha-switch>
-          <span style="margin-left: 8px;">Entire Round</span>
+          <span style="margin-left: 8px;">Show Entire Round</span>
+        </div>
+        <div style="margin-bottom: 8px; display: flex; align-items: center;">
+          <ha-switch id="sw_table_pos"></ha-switch>
+          <span style="margin-left: 8px;">Show Table Position</span>
         </div>
 
-        <h3>Display Key Plays</h3>
+        <h3>Display Key Plays (Expanded)</h3>
         <div style="margin-bottom: 8px; display: flex; align-items: center;">
           <ha-switch id="sw_adv"></ha-switch>
           <span style="margin-left: 8px;">Enable Key Plays</span>
@@ -480,19 +496,19 @@ class NRLScoreCardEditor extends HTMLElement {
           </div>
           <div style="display: flex; align-items: center;">
             <ha-switch id="sw_tries"></ha-switch>
-            <span style="margin-left: 8px;">Tries</span>
+            <span style="margin-left: 8px;">Show Tries</span>
           </div>
           <div style="display: flex; align-items: center;">
             <ha-switch id="sw_conv"></ha-switch>
-            <span style="margin-left: 8px;">Conversions</span>
+            <span style="margin-left: 8px;">Show Conversions</span>
           </div>
           <div style="display: flex; align-items: center;">
             <ha-switch id="sw_pen"></ha-switch>
-            <span style="margin-left: 8px;">Penalties</span>
+            <span style="margin-left: 8px;">Show Penalty Goals</span>
           </div>
           <div style="display: flex; align-items: center;">
             <ha-switch id="sw_sin"></ha-switch>
-            <span style="margin-left: 8px;">Sin Bins</span>
+            <span style="margin-left: 8px;">Show Sin Bins</span>
           </div>
         </div>
 
@@ -504,11 +520,11 @@ class NRLScoreCardEditor extends HTMLElement {
         <div id="stats_settings" style="margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px; margin-left: 24px;">
           <div style="display: flex; align-items: center;">
             <ha-switch id="sw_possession"></ha-switch>
-            <span style="margin-left: 8px;">Possession</span>
+            <span style="margin-left: 8px;">Show Possession</span>
           </div>
           <div style="display: flex; align-items: center;">
             <ha-switch id="sw_completion"></ha-switch>
-            <span style="margin-left: 8px;">Completion</span>
+            <span style="margin-left: 8px;">Show Completion</span>
           </div>
         </div>
       </div>
@@ -615,7 +631,3 @@ window.customCards.push({
   preview: true,
   description: "A custom card to display NRL scores and match states."
 });
-
-
-
-
