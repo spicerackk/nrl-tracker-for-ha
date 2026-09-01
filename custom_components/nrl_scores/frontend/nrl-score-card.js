@@ -229,24 +229,41 @@ class NRLScoreCard extends HTMLElement {
           } else if (f.match_mode === 'Post') {
             fStatus = 'Final';
             fClass = 'status-final';
+          } else {
+            if (this.config.show_fixture_date === true && f.kick_off_time) {
+              const ko = new Date(f.kick_off_time);
+              const dayStr = ko.toLocaleDateString(undefined, { weekday: 'short' });
+              const dateStr = ko.toLocaleDateString('en-AU', { month: '2-digit', day: '2-digit' });
+              const timeStr = ko.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+              fStatus = `${dayStr} ${dateStr} ${timeStr}`;
+            }
           }
           
           let hLogo = "https://www.nrl.com/.theme/" + f.home_theme + "/badge.svg";
           let aLogo = "https://www.nrl.com/.theme/" + f.away_theme + "/badge.svg";
+
+          let hLadder = "";
+          let aLadder = "";
+          if (this.config.show_fixture_ladder === true && attrs.ladder) {
+             const hTeam = attrs.ladder.find(t => t.team === f.home_team || f.home_team.includes(t.team) || t.team.includes(f.home_team));
+             if (hTeam) hLadder = `<span style="font-size: 10px; color: var(--secondary-text-color); margin-right: 4px;">(${hTeam.position})</span>`;
+             const aTeam = attrs.ladder.find(t => t.team === f.away_team || f.away_team.includes(t.team) || t.team.includes(f.away_team));
+             if (aTeam) aLadder = `<span style="font-size: 10px; color: var(--secondary-text-color); margin-left: 4px;">(${aTeam.position})</span>`;
+          }
 
           return `
             <div class="match-row">
               <div class="match-status ${fClass}">${fStatus}</div>
               <div class="match-teams">
                 <div class="match-team home">
-                  <span class="match-name">${f.home_team}</span>
+                  ${hLadder}<span class="match-name">${f.home_team}</span>
                   <img src="${hLogo}" class="match-logo" onerror="this.style.display='none'">
                 </div>
                 <div class="match-score">${f.home_score}</div>
                 <div class="match-divider">-</div>
                 <div class="match-score">${f.away_score}</div>
                 <div class="match-team away">
-                  <span class="match-name">${f.away_team}</span>
+                  <span class="match-name">${f.away_team}</span>${aLadder}
                   <img src="${aLogo}" class="match-logo" onerror="this.style.display='none'">
                 </div>
               </div>
@@ -475,6 +492,16 @@ class NRLScoreCardEditor extends HTMLElement {
           <ha-switch id="sw_round"></ha-switch>
           <span style="margin-left: 8px;">Entire Round</span>
         </div>
+        <div id="round_settings" style="margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px; margin-left: 24px;">
+          <div style="display: flex; align-items: center;">
+            <ha-switch id="sw_fixture_ladder"></ha-switch>
+            <span style="margin-left: 8px;">Ladder Position</span>
+          </div>
+          <div style="display: flex; align-items: center;">
+            <ha-switch id="sw_fixture_date"></ha-switch>
+            <span style="margin-left: 8px;">Day and Date</span>
+          </div>
+        </div>
 
         <h3>Display Key Plays</h3>
         <div style="margin-bottom: 8px; display: flex; align-items: center;">
@@ -532,6 +559,8 @@ class NRLScoreCardEditor extends HTMLElement {
     this.setupSwitch('sw_countdown', 'show_countdown', true);
     this.setupSwitch('sw_form', 'show_form', true);
     this.setupSwitch('sw_round', 'show_entire_round', false);
+    this.setupSwitch('sw_fixture_ladder', 'show_fixture_ladder', false);
+    this.setupSwitch('sw_fixture_date', 'show_fixture_date', false);
     this.setupSwitch('sw_table_pos', 'show_table_position', true);
 
     // Key Plays
@@ -553,6 +582,7 @@ class NRLScoreCardEditor extends HTMLElement {
       });
     }
     
+    this.querySelector('#sw_round').addEventListener('change', () => this.updateEditor());
     this.querySelector('#sw_adv').addEventListener('change', () => this.updateEditor());
     this.querySelector('#sw_stats').addEventListener('change', () => this.updateEditor());
   }
@@ -583,6 +613,13 @@ class NRLScoreCardEditor extends HTMLElement {
     this.updateSwitch('sw_countdown', 'show_countdown', true);
     this.updateSwitch('sw_form', 'show_form', true);
     this.updateSwitch('sw_round', 'show_entire_round', false);
+    this.updateSwitch('sw_fixture_ladder', 'show_fixture_ladder', false);
+    this.updateSwitch('sw_fixture_date', 'show_fixture_date', false);
+    
+    const roundSettings = this.querySelector('#round_settings');
+    if (roundSettings) {
+      roundSettings.style.display = this._config.show_entire_round === true ? 'flex' : 'none';
+    }
     this.updateSwitch('sw_table_pos', 'show_table_position', true);
 
     this.updateSwitch('sw_adv', 'show_advanced_plays', false);
